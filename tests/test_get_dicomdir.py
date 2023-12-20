@@ -14,13 +14,26 @@ TEST_MR_DICOM = Path(get_testdata_file("MR_small.dcm"))
 
 
 @pytest.fixture
-def tmp_path():
+def tmp_flat_directory():
     tmp = TemporaryDirectory()
     tmp_path = Path(tmp.name)
     copyfile(TEST_CT_DICOM, tmp_path / TEST_CT_DICOM.name)
     copyfile(TEST_MR_DICOM, tmp_path / TEST_MR_DICOM.name)
     yield tmp_path
     tmp.cleanup()
+
+
+@pytest.fixture
+def tmp_nested_directory():
+    tmp = TemporaryDirectory()
+    tmp_path = Path(tmp.name)
+    tmp_path.joinpath("CT").mkdir()
+    tmp_path.joinpath("MR").mkdir()
+    copyfile(TEST_CT_DICOM, tmp_path.joinpath("CT", TEST_CT_DICOM.name))
+    copyfile(TEST_MR_DICOM, tmp_path.joinpath("MR", TEST_MR_DICOM.name))
+    yield tmp_path
+    tmp.cleanup()
+
 
 def test_get_dicomdir_with_existing_dicomdir():
     # Call the get_dicomdir function
@@ -39,9 +52,20 @@ def test_get_dicomdir_with_invalid_argument():
         get_dicomdir(5)
 
 
-def test_get_dicomdir_with_no_dicomdir(tmp_path):
+def test_get_dicomdir_with_no_dicomdir_flat(tmp_flat_directory):
     # Call the get_dicomdir function
-    result = get_dicomdir(tmp_path)
+    result = get_dicomdir(tmp_flat_directory)
+
+    # Assert that the result is a FileSet object
+    assert isinstance(result, FileSet)
+
+    # Assert that the FileSet contains the DICOM files
+    assert len(result) == 2
+
+
+def test_get_dicomdir_with_no_dicomdir_nested(tmp_nested_directory):
+    # Call the get_dicomdir function
+    result = get_dicomdir(tmp_nested_directory)
 
     # Assert that the result is a FileSet object
     assert isinstance(result, FileSet)
