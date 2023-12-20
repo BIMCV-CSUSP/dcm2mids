@@ -39,5 +39,7 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
         for filename in input_dir.rglob("*.dcm"):
             fs.add(filename)
     else:
-        raise FileNotFoundError(f"{input_dir} is not a directory.")
+        raise NotADirectoryError(f"{input_dir} is not a directory.")
+    if len(fs) == 0:
+        raise RuntimeError(f"No DICOM files found in {input_dir}.")
     return fs
