@@ -2,4 +2,5 @@
 Contributors
 ============
 
-* jomasator2 <josator2infupv@gmail.com>
+* jomasator2 <josemanuel.saborit@fisabio.com>
+* MoraRubio <alejandro.mora@fisabio.com>
