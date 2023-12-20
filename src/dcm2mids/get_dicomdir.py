@@ -25,5 +25,5 @@ def get_dicomdir(input_folder: Union[Path, str]) -> FileSet:
     else:  # If DICOMDIR does not exist, we will search for DICOM files in the input folder.
         fs = FileSet()
         for file in dicomdir.glob("*.dcm"):
-            fs.add(path)
+            fs.add(file)
     return fs
