@@ -5,25 +5,34 @@ from pydicom import dcmread
 from pydicom.fileset import FileSet
 
 
-def get_dicomdir(input_folder: Union[Path, str]) -> FileSet:
+def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
     """
-    Get the DICOMDIR file from the input folder.
+    Get the DICOM structure from the input directory.
+
+    :param input_dir: The input directory as a Path object or a string.
+    :type input_dir: Union[pathlib.Path, str]
+    :raises TypeError: If the input_dir is not a Path object or a string.
+    :raises FileNotFoundError: If the input_dir does not exist or is not a directory.
+    :return: A FileSet object containing the DICOM files from the input directory.
+    :rtype: pydicom.fileset.FileSet
     """
-    if not isinstance(input_folder, Path):
+    if not isinstance(input_dir, Path):
         try:
-            input_folder = Path(input_folder)
+            input_dir = Path(input_dir)
         except TypeError:
             raise TypeError(
-                f"Input folder must be a Path object or a string. Got {type(input_folder)} instead."
+                f"Input dir must be a Path object or a string. Got {type(input_dir)} instead."
             )
-    if not input_folder.exists():
-        raise FileNotFoundError(f"Input folder {input_folder} does not exist.")
-    dicomdir = input_folder / "DICOMDIR"
-    if dicomdir.exists():  # If DICOMDIR exists, we will use it to get the DICOM str.
+    if not input_dir.exists():
+        raise FileNotFoundError(f"{input_dir} does not exist.")
+    dicomdir = input_dir / "DICOMDIR"
+    if dicomdir.exists():  # If DICOMDIR exists, we will use it to get the DICOM structure.
         ds = dcmread(dicomdir)
         fs = FileSet(ds)
-    else:  # If DICOMDIR does not exist, we will search for DICOM files in the input folder.
+    elif input_dir.is_dir():  # If DICOMDIR does not exist, we will search for DICOM files in the input dir.
         fs = FileSet()
-        for file in dicomdir.glob("*.dcm"):
+        for file in dicomdir.rglob("*.dcm"):
             fs.add(file)
+    else:
+        raise FileNotFoundError(f"{input_dir} is not a directory.")
     return fs
