@@ -35,6 +35,14 @@ def tmp_nested_directory():
     tmp.cleanup()
 
 
+def test_get_dicomdir_with_empty_dir():
+    # Create a temporary directory
+    with TemporaryDirectory() as tmp:
+        with pytest.raises(RuntimeError):
+            # Call the get_dicomdir function
+            result = get_dicomdir(tmp)
+
+
 def test_get_dicomdir_with_existing_dicomdir():
     # Call the get_dicomdir function
     result = get_dicomdir(TEST_DICOMDIR)
