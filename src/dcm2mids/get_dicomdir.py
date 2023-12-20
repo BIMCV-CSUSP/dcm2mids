@@ -1,4 +1,5 @@
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Union
 
 from pydicom import dcmread
@@ -26,13 +27,17 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
     if not input_dir.exists():
         raise FileNotFoundError(f"{input_dir} does not exist.")
     dicomdir = input_dir / "DICOMDIR"
-    if dicomdir.exists():  # If DICOMDIR exists, we will use it to get the DICOM structure.
+    if (
+        dicomdir.exists()
+    ):  # If DICOMDIR exists, we will use it to get the DICOM structure.
         ds = dcmread(dicomdir)
         fs = FileSet(ds)
-    elif input_dir.is_dir():  # If DICOMDIR does not exist, we will search for DICOM files in the input dir.
+    elif (
+        input_dir.is_dir()
+    ):  # If DICOMDIR does not exist, we will search for DICOM files in the input dir.
         fs = FileSet()
-        for file in dicomdir.rglob("*.dcm"):
-            fs.add(file)
+        for filename in input_dir.rglob("*.dcm"):
+            fs.add(filename)
     else:
         raise FileNotFoundError(f"{input_dir} is not a directory.")
     return fs
