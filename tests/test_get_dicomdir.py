@@ -1,47 +1,54 @@
-import pytest
 from pathlib import Path
+from shutil import copyfile
+from tempfile import TemporaryDirectory
+
+import pytest
 from pydicom.data import get_testdata_file
 from pydicom.fileset import FileSet
+
 from dcm2mids.get_dicomdir import get_dicomdir
 
-TEST_FILE = Path(get_testdata_file("DICOMDIR")).parent
+TEST_DICOMDIR = Path(get_testdata_file("DICOMDIR")).parent
+TEST_CT_DICOM = Path(get_testdata_file("CT_small.dcm"))
+TEST_MR_DICOM = Path(get_testdata_file("MR_small.dcm"))
+
+
+@pytest.fixture
+def tmp_path():
+    tmp = TemporaryDirectory()
+    tmp_path = Path(tmp.name)
+    copyfile(TEST_CT_DICOM, tmp_path / TEST_CT_DICOM.name)
+    copyfile(TEST_MR_DICOM, tmp_path / TEST_MR_DICOM.name)
+    yield tmp_path
+    tmp.cleanup()
 
 def test_get_dicomdir_with_existing_dicomdir():
     # Call the get_dicomdir function
-    result = get_dicomdir(TEST_FILE)
+    result = get_dicomdir(TEST_DICOMDIR)
 
     # Assert that the result is a FileSet object
     assert isinstance(result, FileSet)
 
     # Assert that the FileSet is not empty
-    assert len(result.find()) > 0
+    assert len(result) > 0
+
 
 def test_get_dicomdir_with_invalid_argument():
     # Call the get_dicomdir function with an invalid argument
     with pytest.raises(TypeError):
         get_dicomdir(5)
 
-# def test_get_dicomdir_with_no_dicomdir(tmp_path):
-#     # Create a temporary folder
-#     input_folder = tmp_path / "input"
-#     input_folder.mkdir()
 
-#     # Create some DICOM files
-#     dicom_file1 = input_folder / "file1.dcm"
-#     dicom_file1.touch()
+def test_get_dicomdir_with_no_dicomdir(tmp_path):
+    # Call the get_dicomdir function
+    result = get_dicomdir(tmp_path)
 
-#     dicom_file2 = input_folder / "file2.dcm"
-#     dicom_file2.touch()
+    # Assert that the result is a FileSet object
+    assert isinstance(result, FileSet)
 
-#     # Call the get_dicomdir function
-#     result = get_dicomdir.get_dicomdir(input_folder)
+    # Assert that the FileSet contains the DICOM files
+    assert len(result) == 2
 
-#     # Assert that the result is a FileSet object
-#     assert isinstance(result, get_dicomdir.FileSet)
-
-#     # Assert that the FileSet contains the DICOM files
-#     assert dicom_file1 in result
-#     assert dicom_file2 in result
 
 def test_get_dicomdir_with_nonexistent_folder():
     # Call the get_dicomdir function with a nonexistent folder
