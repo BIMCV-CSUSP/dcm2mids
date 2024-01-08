@@ -1,6 +1,10 @@
 import argparse
+
 # Importante solo utilizar el modulo Path de pathlib.
 from pathlib import Path
+
+from .create_mids_directory import create_mids_directory
+from .get_dicomdir import get_dicomdir
 
 
 def main():
@@ -37,8 +41,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-get_dicomdir(args.input)
+fileset = get_dicomdir(args.input)
 
-create_mids_directory(args.input, args.output, args.body_part)
+create_mids_directory(fileset, args.output, args.body_part)
 
-generate_tsvs(args.output)
+# generate_tsvs(args.output)
