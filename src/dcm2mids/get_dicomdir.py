@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Union
-
+from tqdm import tqdm
 from pydicom import dcmread
 from pydicom.fileset import FileSet
 
@@ -35,8 +35,15 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
         input_dir.is_dir()
     ):  # If DICOMDIR does not exist, we will search for DICOM files in the input dir.
         fs = FileSet()
-        for filename in input_dir.rglob("*.dcm"):
-            fs.add(filename)
+        for filename in tqdm(input_dir.rglob("*.dcm")):
+            ds = dcmread(filename)
+            if not (ds.StudyDate and ds.StudyTime):
+                ds.StudyDate = ds.StudyDateTime[:8]
+                ds.StudyTime = ds.StudyDateTime[8:]
+            if not ds.StudyID:
+                ds.StudyID = ds.AccessionNumber
+            fs.add(ds)
+            
     else:
         raise NotADirectoryError(f"{input_dir} is not a directory.")
     if len(fs) == 0:
