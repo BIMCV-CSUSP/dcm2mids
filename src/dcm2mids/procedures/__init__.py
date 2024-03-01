@@ -1,16 +1,23 @@
 import json
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from .dictify import dictify
 
 
 class Procedures(ABC):
-    def __init__(self, mids_path, bodypart, use_bodypart, use_viewposition):
+    def __init__(
+        self,
+        mids_path: Path,
+        bodypart: str,
+        use_bodypart: bool,
+        use_viewposition: bool,
+    ):
         self.mids_path = mids_path
         self.bodypart = bodypart
         self.use_bodypart = use_bodypart
         self.use_viewposition = use_viewposition
-        self.chunk: bool
+        self.use_chunk: bool
 
     # @abstractmethod
     # def control_session_image(self):

@@ -44,7 +44,6 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
             if not ds.StudyID:
                 ds.StudyID = ds.AccessionNumber
             fs.add(ds)
-
     else:
         raise NotADirectoryError(f"{input_dir} is not a directory.")
     if len(fs) == 0:

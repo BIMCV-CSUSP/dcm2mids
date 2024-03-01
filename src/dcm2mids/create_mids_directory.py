@@ -13,10 +13,23 @@ from .procedures.visible_light.visible_light_procedure import ProceduresVisibleL
 def create_mids_directory(
     fileset: FileSet, mids_path: Union[Path, str], bodypart: str
 ) -> None:
-    """Create the MIDS directory structure."""
+    """
+    Create the MIDS directory structure for a given file set and body  part.
+
+    :param fileset: The FileSet object containing the data to be processed.
+    :type fileset: pydicom.fileset.FileSet
+    :param mids_path: The path to the MIDS directory where the data will be stored.
+    :type mids_path: Union[pathlib.Path, str]
+    :param bodypart: The body part to be processed (e.g., "head", "neck", etc.).
+    :type bodypart: str
+    :return: None
+    :rtype: None
+    """
+
     use_bodypart = len(fileset.find_values("BodyPartExamined")) > 1  ### []
     use_viewposition = len(fileset.find_values("ViewPosition")) > 1  ### []
     # procedure_MR = ProceduresMagneticResonance(mids_path, bodypart)
+    mids_path = Path(mids_path)
     procedure_VL = ProceduresVisibleLight(
         mids_path, bodypart, use_bodypart, use_viewposition
     )

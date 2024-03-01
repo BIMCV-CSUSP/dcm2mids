@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import SimpleITK as sitk
 
 from .. import Procedures
@@ -9,7 +11,13 @@ from .. import Procedures
 # TODO: rename nifti file to BIDS/MIDS standard
 #
 class ProceduresVisibleLight(Procedures):
-    def __init__(self, mids_path, bodypart, use_bodypart, use_viewposition):
+    def __init__(
+        self,
+        mids_path: Path,
+        bodypart: str,
+        use_bodypart: bool,
+        use_viewposition: bool,
+    ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
         self.reset()
 
