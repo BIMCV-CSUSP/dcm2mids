@@ -1,6 +1,4 @@
 import argparse
-
-# Importante solo utilizar el modulo Path de pathlib.
 from pathlib import Path
 
 from .create_mids_directory import create_mids_directory

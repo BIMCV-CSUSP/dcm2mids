@@ -1,5 +1,6 @@
-from dcm2mids.procedures import Procedures
 import SimpleITK as sitk
+
+from .. import Procedures
 
 
 # TODO: generate medata from dicom files
@@ -21,39 +22,55 @@ class ProceduresVisibleLight(Procedures):
             return ("op", ("mim-light", "op"))
         if instance.Modality in ["BF", "SM"]:
             return ("BF", ("micr",))
-        
+        return ("", tuple())
 
-    
     def get_name(self, dataset, modality, mim):
-        
-        
-        sub = f"sub-{dataset.PatientID}" 
-        ses = f"ses-{dataset.StudyID}" 
-        run = f"run-{dataset.SeriesNumber}" if dataset.data_element("SeriesNumber") else ""
+        sub = f"sub-{dataset.PatientID}"
+        ses = f"ses-{dataset.StudyID}"
+        run = (
+            f"run-{dataset.SeriesNumber}"
+            if dataset.data_element("SeriesNumber")
+            else ""
+        )
         if self.use_bodypart:
-            bp = f"bp-{dataset.BodyPartExamined}" if dataset.data_element("BodyPartExamined") else f"bp-{self.bodypart}"
+            bp = (
+                f"bp-{dataset.BodyPartExamined}"
+                if dataset.data_element("BodyPartExamined")
+                else f"bp-{self.bodypart}"
+            )
         else:
             bp = ""
         lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
-        vp = "" # f"vp-{dataset.data_element('ViewPosition')}" if dataset.data_element("ViewPosition") else ""
-        chunk = f"chunk-{dataset.InstanceNumber}" if dataset.data_element("InstanceNumber") and self.use_chunk  else ""
-        mod = modality
-        return(
-            self.mids_path.joinpath(sub, ses, *mim, "_".join([part for part in [sub, ses, run, bp, lat, vp, chunk, mod] if part != '']))
+        vp = ""  # f"vp-{dataset.data_element('ViewPosition')}" if dataset.data_element("ViewPosition") else ""
+        chunk = (
+            f"chunk-{dataset.InstanceNumber}"
+            if dataset.data_element("InstanceNumber") and self.use_chunk
+            else ""
         )
-        
+        mod = modality
+        return self.mids_path.joinpath(
+            sub,
+            ses,
+            *mim,
+            "_".join(
+                [
+                    part
+                    for part in [sub, ses, run, bp, lat, vp, chunk, mod]
+                    if part != ""
+                ]
+            ),
+        )
+
     def convert_to_image(self, instance, file_path_mids):
         file_path_mids.parent.mkdir(parents=True, exist_ok=True)
         image = sitk.ReadImage(instance.path)
         sitk.WriteImage(image, file_path_mids)
-        
-
 
     def run(self, instance_list: list):
         self.use_chunk = len(instance_list) > 1
         for _, instance in sorted(instance_list, key=lambda x: x[0]):
             print(instance)
-            dataset=instance.load()
+            dataset = instance.load()
             modality, mim = self.classify_image_type(instance)
             file_path_mids = self.get_name(dataset, modality, mim)
             print(instance.path, file_path_mids)
