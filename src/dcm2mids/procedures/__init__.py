@@ -2,6 +2,8 @@ import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+from pydicom import Dataset
+
 from .dictify import dictify
 
 
@@ -27,7 +29,18 @@ class Procedures(ABC):
     def get_name(self):
         pass
 
-    def convert_to_jsonfile(self, dataset, file_path_mids):
+    @staticmethod
+    def convert_to_jsonfile(dataset: Dataset, file_path_mids: Path):
+        """
+        Convert a dataset to a JSON file.
+
+        :param dataset: The dataset to be converted.
+        :type dataset: pydicom.Dataset
+        :param file_path_mids: The path to the JSON file where the data will be saved.
+        :type file_path_mids: pathlib.Path
+        :return: None
+        :rtype: None
+        """
         json_dict = dictify(dataset)
         file_path_mids.parent.mkdir(parents=True, exist_ok=True)
         with open(file_path_mids, "w") as f:
