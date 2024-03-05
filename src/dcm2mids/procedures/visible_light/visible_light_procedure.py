@@ -9,11 +9,6 @@ from pydicom.fileset import FileInstance
 from .. import Procedures
 
 
-# TODO: generate medata from dicom files
-# TODO: classify image type
-# TODO: convert to nifti
-# TODO: rename nifti file to BIDS/MIDS standard
-#
 class ProceduresVisibleLight(Procedures):
     """Conversion logic for Visible Light Imaging procedures."""
 
@@ -25,7 +20,6 @@ class ProceduresVisibleLight(Procedures):
         use_viewposition: bool,
     ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
-    
 
     def classify_image_type(
         self, instance: FileInstance
@@ -41,38 +35,40 @@ class ProceduresVisibleLight(Procedures):
         print(instance)
         if instance.Modality in ["OP", "SC", "XC", "OT"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'Laterality',
+                "ScanFile",
+                "BodyPart",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "Laterality",
             ]
             return ("op", ("mim-light", "op"))
         if instance.Modality in ["BF", "SM"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'ImagedVolumeHeight',
-                'ImagedVolumeWeight'
+                "ScanFile",
+                "BodyPart",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "ImagedVolumeHeight",
+                "ImagedVolumeWeight",
             ]
             return ("BF", ("micr",))
         return ("", tuple())
 
-    def get_name(self, dataset: Dataset, modality: str, mim: Tuple[str, ...]) -> Path:
+    def get_name(
+        self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
+    ) -> Tuple[Path, Path]:
         """
         Generates a name for the image based on its metadata.
 
@@ -94,7 +90,11 @@ class ProceduresVisibleLight(Procedures):
             else ""
         )
         if self.use_bodypart:
-            bp = f"bp-{dataset.BodyPartExamined}" if "BodyPartExamined" in dataset else f"bp-{self.bodypart}"
+            bp = (
+                f"bp-{dataset.BodyPartExamined}"
+                if "BodyPartExamined" in dataset
+                else f"bp-{self.bodypart}"
+            )
         else:
             bp = ""
         lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
@@ -105,9 +105,12 @@ class ProceduresVisibleLight(Procedures):
             else ""
         )
         mod = modality
-        return(
-            self.mids_path.joinpath(sub, ses, *mim, "_".join([part for part in [sub, ses, run, bp, lat, vp, chunk, mod] if part != ''])),
-            self.mids_path.joinpath(sub,ses)
+        filename = "_".join(
+            [part for part in [sub, ses, run, bp, lat, vp, chunk, mod] if part != ""]
+        )
+        return (
+            self.mids_path.joinpath(sub, ses, *mim, filename),
+            self.mids_path.joinpath(sub, ses),
         )
 
     def convert_to_image(self, instance: FileInstance, file_path_mids: Path):
@@ -123,21 +126,27 @@ class ProceduresVisibleLight(Procedures):
         file_path_mids.parent.mkdir(parents=True, exist_ok=True)
         image = sitk.ReadImage(instance.path)
         sitk.WriteImage(image, file_path_mids)
-        
+
     def get_scan_metadata(self, dataset, file_path_mids):
-        subs = lambda s: re.sub(r'(?<!^)(?=[A-Z])', '_', s).lower()
+        subs = lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
         return {
-            subs(key):value
+            subs(key): value
             for key, value in zip(
                 self.scans_header,
                 [
                     str(file_path_mids.with_suffix(".png")),
-                    dataset.BodyPartExamined if "BodyPartExamined" in dataset else self.bodypart, 
-                    *[(dataset[i].value if i in dataset else "n/a") for i in self.scans_header[2:]],
-                ]
+                    (
+                        dataset.BodyPartExamined
+                        if "BodyPartExamined" in dataset
+                        else self.bodypart
+                    ),
+                    *[
+                        (dataset[i].value if i in dataset else "n/a")
+                        for i in self.scans_header[2:]
+                    ],
+                ],
             )
         }
-        
 
     def run(self, instance_list: List[Tuple[int, FileInstance]]):
         """
@@ -153,9 +162,15 @@ class ProceduresVisibleLight(Procedures):
             print(instance)
             dataset = instance.load()
             modality, mim = self.classify_image_type(instance)
-            file_path_mids, session_absolute_path_mids = self.get_name(dataset, modality, mim)
+            file_path_mids, session_absolute_path_mids = self.get_name(
+                dataset, modality, mim
+            )
             self.convert_to_image(instance, file_path_mids.with_suffix(".png"))
             self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
-            file_path_relative_mids = file_path_mids.relative_to(session_absolute_path_mids).with_suffix(".png")
-            list_scan_metadata.append(self.get_scan_metadata(dataset, file_path_relative_mids))
+            file_path_relative_mids = file_path_mids.relative_to(
+                session_absolute_path_mids
+            ).with_suffix(".png")
+            list_scan_metadata.append(
+                self.get_scan_metadata(dataset, file_path_relative_mids)
+            )
         return list_scan_metadata
