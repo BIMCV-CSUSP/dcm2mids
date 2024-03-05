@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import Union
-from tqdm import tqdm
+
 from pydicom import dcmread
 from pydicom.fileset import FileSet
+from tqdm import tqdm
 
 
 def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
