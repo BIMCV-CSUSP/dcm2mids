@@ -12,10 +12,10 @@ from .generate_tsvs import (
     save_scans_tsv
 )
 from .procedures.magnetic_resonance.magnetic_resonance_procedure import (
-    ProceduresMagneticResonance,
+    MagneticResonanceProcedures
 )
 from .procedures.visible_light.visible_light_procedure import (
-    ProceduresVisibleLight
+    VisibleLightProcedures
 )
 from pydicom.fileset import FileSet
 
