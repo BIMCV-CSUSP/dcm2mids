@@ -9,7 +9,7 @@ participants_header = [
     "participant_id",  # This is the participant_id from the BIDS/MIDS standard (sub-<participant_id>)
     "participant_pseudo_id",  # This is the participant_pseudo_id from the PatientID (participant_id)
     "gender",  # This is the gender of the participant
-    "patient_birthday",  # This is the patient's birthday
+    "participant_birthday",  # This is the patient's birthday
     "age",  # this is the list of ages of the participant in the sessions
     "modalities",  # This is the list of modalities used in the sessions
     "body_part_examined",  # This is the list of body parts examined in the sessions
