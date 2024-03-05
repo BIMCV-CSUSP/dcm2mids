@@ -12,10 +12,11 @@ from .generate_tsvs import (
     save_session_tsv,
 )
 from .procedures.magnetic_resonance.magnetic_resonance_procedure import (
-    ProceduresMagneticResonance,
+    MagneticResonanceProcedures
 )
-from .procedures.visible_light.visible_light_procedure import ProceduresVisibleLight
-
+from .procedures.visible_light.visible_light_procedure import (
+    VisibleLightProcedures
+)
 
 # TODO: Add the logic to create the MIDS directory structure.
 def create_mids_directory(
@@ -38,7 +39,7 @@ def create_mids_directory(
     use_viewposition = len(fileset.find_values("ViewPosition")) > 1  ### []
     #  procedure_MR = ProceduresMagneticResonance(mids_path, bodypart)
     mids_path = Path(mids_path)
-    procedure_VL = ProceduresVisibleLight(
+    procedure_VL = VisibleLightProcedures(
         mids_path, bodypart, use_bodypart, use_viewposition
     )
     participants = []

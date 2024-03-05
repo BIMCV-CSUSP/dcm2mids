@@ -7,7 +7,7 @@ from dcm2mids.procedures.dictify import dictify
 # TODO: convert to nifti
 # TODO: rename nifti file to BIDS/MIDS standard
 #
-class ProceduresMagneticResonance(Procedures):
+class MagneticResonanceProcedures(Procedures):
     def __init__(self, mids_path, bodypart):
         super().__init__(mids_path, bodypart)
         self.reset()

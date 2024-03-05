@@ -9,7 +9,7 @@ from pydicom.fileset import FileInstance
 from .. import Procedures
 
 
-class ProceduresVisibleLight(Procedures):
+class VisibleLightProcedures(Procedures):
     """Conversion logic for Visible Light Imaging procedures."""
 
     def __init__(
