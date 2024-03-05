@@ -14,7 +14,7 @@ from .. import Procedures
 # TODO: convert to nifti
 # TODO: rename nifti file to BIDS/MIDS standard
 #
-class ProceduresVisibleLight(Procedures):
+class VisibleLightProcedures(Procedures):
     """Conversion logic for Visible Light Imaging procedures."""
 
     def __init__(
