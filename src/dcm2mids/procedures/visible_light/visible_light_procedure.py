@@ -9,7 +9,7 @@ from pydicom.fileset import FileInstance
 
 from .. import Procedures
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dcm2mids").getChild("visible_light_procedure")
 
 
 class VisibleLightProcedures(Procedures):
@@ -178,8 +178,11 @@ class VisibleLightProcedures(Procedures):
                 self.get_scan_metadata(dataset, file_path_relative_mids)
             )
             logger.info(
-                "Successfully processed instance %s. Saved to %s.",
+                "Successfully processed instance %s",
                 instance.path,
-                file_path_relative_mids,
+            )
+            logger.info(
+                "Saved to %s",
+                file_path_relative_mids.stem,
             )
         return list_scan_metadata

@@ -47,16 +47,16 @@ def create_mids_directory(
     )
     participants = []
     for subject in fileset.find_values("PatientID"):
-        logger.info("Subject: %s", subject)
+        logger.debug("Subject: %s", subject)
         participant = {}
         sessions = []
         for session in fileset.find_values("StudyID", fileset.find(PatientID=subject)):
-            logger.info("Session: %s", session)
+            logger.debug("Session: %s", session)
             scans = []
             for scan in fileset.find_values(
                 "SeriesNumber", fileset.find(PatientID=subject, StudyID=session)
             ):
-                logger.info("Scan: %s", scan)
+                logger.debug("Scan: %s", scan)
                 instance_list = []
                 for instance in fileset.find(
                     PatientID=subject, StudyID=session, SeriesNumber=scan

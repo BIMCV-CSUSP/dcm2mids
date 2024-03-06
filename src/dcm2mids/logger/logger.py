@@ -20,7 +20,7 @@ class ColorFormatter(logging.Formatter):
 
     def format(self, record):
         log_fmt = self.formats.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        formatter = logging.Formatter(log_fmt, datefmt="%H:%M:%S")
         return formatter.format(record)
 
 
@@ -34,7 +34,7 @@ def set_logger(
     ch = logging.StreamHandler()
     ch.setLevel(level)
 
-    format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format_string = "%(asctime)s - %(name)s - %(levelname)-7s - %(message)s"
 
     # Create colored formatter
     color_formatter = ColorFormatter(format_string)

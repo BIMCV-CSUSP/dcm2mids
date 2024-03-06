@@ -50,8 +50,6 @@ def get_session_row(fileset: FileSet, subject: str, session: str) -> Dict[str, s
     session_row["session_date_time"] = [date_time]
     session_row.pop("StudyDate")
     session_row.pop("StudyTime")
-
-    print(session_row["session_date_time"])
     session_row["session_date_time"] = [
         datetime.strptime(s, "%Y%m%d%H%M%S.%f")
         for s in session_row["session_date_time"]
