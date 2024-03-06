@@ -5,6 +5,7 @@
 #
 class GeneralRadiologicProcedures(Procedures):
     """Conversion logic for General Radiologic Imaging procedures."""
+
     def __init__(
         self,
         mids_path: Path,
@@ -14,7 +15,7 @@ class GeneralRadiologicProcedures(Procedures):
     ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
 
-    def classify_image_type( 
+    def classify_image_type(
         self, instance: FileInstance
     ) -> Tuple[str, Tuple[str, ...]]:
         """
@@ -27,17 +28,17 @@ class GeneralRadiologicProcedures(Procedures):
         """
         if instance.Modality in ["CR", "DX"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'Laterality',
+                "ScanFile",
+                "BodyPart",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "Laterality",
             ]
             return ("op", ("mim-light", "op"))
 

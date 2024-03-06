@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 from typing import List, Tuple
@@ -7,6 +8,8 @@ from pydicom import Dataset
 from pydicom.fileset import FileInstance
 
 from .. import Procedures
+
+logger = logging.getLogger(__name__)
 
 
 class VisibleLightProcedures(Procedures):
@@ -32,7 +35,9 @@ class VisibleLightProcedures(Procedures):
         :returns: A tuple containing the image type and a tuple of labels for that type.
         :rtype: tuple[str, tuple[str, ...]]
         """
-        print(instance)
+
+        logger.debug("Processing instance %s", instance.path)
+        logger.debug("Instance modality: %s", instance.Modality)
         if instance.Modality in ["OP", "SC", "XC", "OT"]:
             self.scans_header = [
                 "ScanFile",
@@ -159,7 +164,6 @@ class VisibleLightProcedures(Procedures):
         self.use_chunk = len(instance_list) > 1
         list_scan_metadata = []
         for _, instance in sorted(instance_list, key=lambda x: x[0]):
-            print(instance)
             dataset = instance.load()
             modality, mim = self.classify_image_type(instance)
             file_path_mids, session_absolute_path_mids = self.get_name(
@@ -172,5 +176,10 @@ class VisibleLightProcedures(Procedures):
             ).with_suffix(".png")
             list_scan_metadata.append(
                 self.get_scan_metadata(dataset, file_path_relative_mids)
+            )
+            logger.info(
+                "Successfully processed instance %s. Saved to %s.",
+                instance.path,
+                file_path_relative_mids,
             )
         return list_scan_metadata
