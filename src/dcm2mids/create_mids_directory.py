@@ -4,6 +4,8 @@ from typing import Union
 
 from pydicom.fileset import FileSet
 
+from dcm2mids.procedures.general_radiology import general_radiology_procedure
+
 from .generate_tsvs import (
     get_participant_row,
     get_session_row,
@@ -42,6 +44,7 @@ def create_mids_directory(
     procedure_VL = VisibleLightProcedures(
         mids_path, bodypart, use_bodypart, use_viewposition
     )
+    procedure_RX = general_radiology_procedure(mids_path, bodypart)
     participants = []
     for subject in fileset.find_values("PatientID"):
         participant = {}
@@ -65,7 +68,8 @@ def create_mids_directory(
                 if instance_list[0][1].Modality == "MR":
                     pass
                 if instance_list[0][1].Modality in ["CR", "DX", "CT", "PT"]:
-                    pass
+                    scans_row = procedure_RX.run(instance_list)
+                    
                 if instance_list[0][1].Modality in ["OP", "SC", "XC", "OT", "SM", "BF"]:
                     scans_row = procedure_VL.run(instance_list)
                 scans.extend(scans_row)
