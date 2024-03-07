@@ -20,6 +20,24 @@ class TomographyProcedures(Procedures):
         use_viewposition: bool,
     ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
+        self.scans_header = [
+                'ScanFile',
+                'BodyPart',
+                'ViewPosition',
+                'SeriesNumber',
+                'AccessionNumber',
+                'Manufacturer',
+                'ManufacturerModelName',
+                'Modality',
+                'Columns',
+                'Rows',
+                'PhotometricInterpretation',
+                'Laterality',
+                'KVP',
+                'Exposure',
+                'ExposureTime',
+                'XRayTubeCurrent'
+            ]
 
     def classify_image_type(
         self, instance: FileInstance
