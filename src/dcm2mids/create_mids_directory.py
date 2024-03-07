@@ -58,23 +58,24 @@ def create_mids_directory(
                 instance_list = sorted(
                     instance_list, key=lambda x: int(x.InstanceNumber)
                 )
-                if instance_list[0].Modality == "MR":
+                modality = instance_list[0].Modality
+                if modality == "MR":
                     scans_row = MagneticResonanceProcedures(
                         mids_path, bodypart, use_bodypart, use_viewposition
                     ).run(instance_list)
-                if instance_list[0].Modality in ["CR", "DX"]:
+                if modality in ["CR", "DX"]:
                     scans_row = ConventionalRadiologyProcedures(
                         mids_path, bodypart, use_bodypart, use_viewposition
                     ).run(instance_list)
-                if instance_list[0].Modality in ["CT", "PT"]:
+                if modality in ["CT", "PT"]:
                     scans_row = TomographyProcedures(
-                        mids_path, bodypart, use_bodypart, use_viewposition
+                        mids_path,  bodypart, use_bodypart, use_viewposition
                     ).run(instance_list)
-                if instance_list[0].Modality in ["OP", "SC", "XC", "OT"]:
+                if modality in ["OP", "SC", "XC", "OT"]:
                     scans_row = OphthalmographyProcedures(
                         mids_path, bodypart, use_bodypart, use_viewposition
                     ).run(instance_list)
-                if instance_list[0].Modality in ["SM", "BF"]:
+                if modality in ["SM", "BF"]:
                     scans_row = MicroscopyProcedures(
                         mids_path, bodypart, use_bodypart, use_viewposition
                     ).run(instance_list)
