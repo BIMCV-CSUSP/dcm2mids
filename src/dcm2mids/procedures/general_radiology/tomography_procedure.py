@@ -1,7 +1,8 @@
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
+from pydicom import Dataset
 from pydicom.fileset import FileInstance
 
 from ..procedures import Procedures
@@ -53,11 +54,13 @@ class TomographyProcedures(Procedures):
             ]
             return (
                 instance.Modality.lower(),
-                (instance.Modality.lower(),)
-                if self.bodypart in ["head", "brain", "skull"]
-                else (
-                    "mim-rx",
-                    instance.Modality.lower(),
+                (
+                    (instance.Modality.lower(),)
+                    if self.bodypart in ["head", "brain", "skull"]
+                    else (
+                        "mim-rx",
+                        instance.Modality.lower(),
+                    )
                 ),
                 ".png",
             )
@@ -92,11 +95,13 @@ class TomographyProcedures(Procedures):
             ]
             return (
                 instance.Modality.lower(),
-                (instance.Modality.lower(),)
-                if self.bodypart in ["head", "brain", "skull"]
-                else (
-                    "mim-rx",
-                    instance.Modality.lower(),
+                (
+                    (instance.Modality.lower(),)
+                    if self.bodypart in ["head", "brain", "skull"]
+                    else (
+                        "mim-rx",
+                        instance.Modality.lower(),
+                    )
                 ),
                 ".nii.gz",
             )
