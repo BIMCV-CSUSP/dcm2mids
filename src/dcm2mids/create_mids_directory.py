@@ -5,6 +5,8 @@ from typing import Union
 
 from pydicom.fileset import FileSet
 
+from dcm2mids.procedures.general_radiology import general_radiology_procedure
+
 from .generate_tsvs import (
     get_participant_row,
     get_session_row,

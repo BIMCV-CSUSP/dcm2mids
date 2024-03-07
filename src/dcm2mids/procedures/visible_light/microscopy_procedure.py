@@ -6,6 +6,7 @@ from typing import List, Tuple
 import SimpleITK as sitk
 from pydicom import Dataset
 from pydicom.fileset import FileInstance
+from shutil import copyfile
 
 from ..procedures import Procedures
 
@@ -26,7 +27,7 @@ class MicroscopyProcedures(Procedures):
 
     def classify_image_type(
         self, instance: FileInstance
-    ) -> Tuple[str, Tuple[str, ...]]:
+    ) -> Tuple[str, Tuple[str, ...], str]:
         """
         Classifies an image based on its modality.
 
@@ -52,7 +53,7 @@ class MicroscopyProcedures(Procedures):
                 "PhotometricInterpretation",
                 "Laterality",
             ]
-            return ("op", ("mim-light", "op"))
+            return ("op", ("mim-light", "op"), ".png")
         if instance.Modality in ["BF", "SM"]:
             self.scans_header = [
                 "ScanFile",
@@ -68,8 +69,8 @@ class MicroscopyProcedures(Procedures):
                 "ImagedVolumeHeight",
                 "ImagedVolumeWeight",
             ]
-            return ("BF", ("micr",))
-        return ("", tuple())
+            return ("BF", ("micr",), ".dcm")
+        return ("", tuple(), "")
 
     def get_name(
         self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
@@ -127,10 +128,12 @@ class MicroscopyProcedures(Procedures):
         :param file_path_mids: The path where the converted image will be saved.
         :type file_path_mids: pathlib.Path
         """
-
-        file_path_mids.parent.mkdir(parents=True, exist_ok=True)
-        image = sitk.ReadImage(instance.path)
-        sitk.WriteImage(image, file_path_mids)
+        if file_path_mids.suffix == ".dcm":
+            copyfile(instance.path, file_path_mids)
+        else:
+            file_path_mids.parent.mkdir(parents=True, exist_ok=True)
+            image = sitk.ReadImage(instance.path)
+            sitk.WriteImage(image, file_path_mids)
 
     def get_scan_metadata(self, dataset, file_path_mids):
         subs = lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
@@ -165,11 +168,12 @@ class MicroscopyProcedures(Procedures):
         list_scan_metadata = []
         for instance in instance_list:
             dataset = instance.load()
-            modality, mim = self.classify_image_type(instance)
+            modality, mim, ext = self.classify_image_type(instance)
             file_path_mids, session_absolute_path_mids = self.get_name(
                 dataset, modality, mim
             )
-            self.convert_to_image(instance, file_path_mids.with_suffix(".png"))
+            
+            self.convert_to_image(instance, file_path_mids.with_suffix(ext))
             self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
             file_path_relative_mids = file_path_mids.relative_to(
                 session_absolute_path_mids
