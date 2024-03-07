@@ -7,12 +7,12 @@ import SimpleITK as sitk
 from pydicom import Dataset
 from pydicom.fileset import FileInstance
 
-from .. import Procedures
+from ..procedures import Procedures
 
-logger = logging.getLogger("dcm2mids").getChild("visible_light_procedure")
+logger = logging.getLogger("dcm2mids").getChild("ophthalmography_procedure")
 
 
-class VisibleLightProcedures(Procedures):
+class OphthalmographyProcedures(Procedures):
     """Conversion logic for Visible Light Imaging procedures."""
 
     def __init__(
@@ -153,7 +153,7 @@ class VisibleLightProcedures(Procedures):
             )
         }
 
-    def run(self, instance_list: List[Tuple[int, FileInstance]]):
+    def run(self, instance_list: List[FileInstance]):
         """
         Runs the image conversion pipeline on a list of instances.
 
@@ -163,7 +163,7 @@ class VisibleLightProcedures(Procedures):
 
         self.use_chunk = len(instance_list) > 1
         list_scan_metadata = []
-        for _, instance in sorted(instance_list, key=lambda x: x[0]):
+        for instance in instance_list:
             dataset = instance.load()
             modality, mim = self.classify_image_type(instance)
             file_path_mids, session_absolute_path_mids = self.get_name(

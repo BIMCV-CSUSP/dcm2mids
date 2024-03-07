@@ -1,12 +1,11 @@
-from dcm2mids.procedures import Procedures
+import logging
+from ..procedures import Procedures
 from dcm2mids.procedures.dictify import dictify
 
 
-# TODO: generate medata from dicom files
-# TODO: classify image type
-# TODO: convert to nifti
-# TODO: rename nifti file to BIDS/MIDS standard
-#
+logger = logging.getLogger("dcm2mids").getChild("magnetic_resonance_procedure")
+
+
 class MagneticResonanceProcedures(Procedures):
     def __init__(self, mids_path, bodypart):
         super().__init__(mids_path, bodypart)

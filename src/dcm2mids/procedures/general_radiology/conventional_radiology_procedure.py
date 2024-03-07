@@ -1,9 +1,15 @@
-# TODO: generate medata from dicom files
-# TODO: classify image type
-# TODO: convert to nifti
-# TODO: rename nifti file to BIDS/MIDS standard
-#
-class GeneralRadiologicProcedures(Procedures):
+import logging
+from pathlib import Path
+from typing import Tuple
+
+from pydicom.fileset import FileInstance
+
+from ..procedures import Procedures
+
+logger = logging.getLogger("dcm2mids").getChild("conventional_radiology_procedure")
+
+
+class ConventionalRadiologyProcedures(Procedures):
     """Conversion logic for General Radiologic Imaging procedures."""
 
     def __init__(
