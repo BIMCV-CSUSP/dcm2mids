@@ -1,10 +1,12 @@
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 from pydicom import Dataset
+from pydicom.fileset import FileInstance
 
-from .dictify import dictify
+from .utils.dictify import dictify
 
 
 class Procedures(ABC):
@@ -26,7 +28,9 @@ class Procedures(ABC):
     #     pass
 
     @abstractmethod
-    def get_name(self):
+    def get_name(
+        self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
+    ) -> Tuple[Path, Path]:
         pass
 
     @staticmethod
@@ -47,5 +51,5 @@ class Procedures(ABC):
             json.dump(json_dict, f, indent=4)
 
     @abstractmethod
-    def run(self):
+    def run(self, instance_list: List[FileInstance]) -> List[Dict]:
         pass

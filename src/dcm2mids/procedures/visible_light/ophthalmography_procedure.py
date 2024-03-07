@@ -1,19 +1,19 @@
 import logging
-import re
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import SimpleITK as sitk
 from pydicom import Dataset
 from pydicom.fileset import FileInstance
 
 from ..procedures import Procedures
+from ..utils import *
 
 logger = logging.getLogger("dcm2mids").getChild("ophthalmography_procedure")
 
 
 class OphthalmographyProcedures(Procedures):
-    """Conversion logic for Visible Light Imaging procedures."""
+    """Conversion logic for Ophthalmography procedures."""
 
     def __init__(
         self,
@@ -23,53 +23,22 @@ class OphthalmographyProcedures(Procedures):
         use_viewposition: bool,
     ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
-
-    def classify_image_type(
-        self, instance: FileInstance
-    ) -> Tuple[str, Tuple[str, ...]]:
-        """
-        Classifies an image based on its modality.
-
-        :param instance: The instance to be classified.
-        :type instance: pydicom.fileset.FileInstance
-        :returns: A tuple containing the image type and a tuple of labels for that type.
-        :rtype: tuple[str, tuple[str, ...]]
-        """
-
-        logger.debug("Processing instance %s", instance.path)
-        logger.debug("Instance modality: %s", instance.Modality)
-        if instance.Modality in ["OP", "SC", "XC", "OT"]:
-            self.scans_header = [
-                "ScanFile",
-                "BodyPart",
-                "SeriesNumber",
-                "AccessionNumber",
-                "Manufacturer",
-                "ManufacturerModelName",
-                "Modality",
-                "Columns",
-                "Rows",
-                "PhotometricInterpretation",
-                "Laterality",
-            ]
-            return ("op", ("mim-light", "op"))
-        if instance.Modality in ["BF", "SM"]:
-            self.scans_header = [
-                "ScanFile",
-                "BodyPart",
-                "SeriesNumber",
-                "AccessionNumber",
-                "Manufacturer",
-                "ManufacturerModelName",
-                "Modality",
-                "Columns",
-                "Rows",
-                "PhotometricInterpretation",
-                "ImagedVolumeHeight",
-                "ImagedVolumeWeight",
-            ]
-            return ("BF", ("micr",))
-        return ("", tuple())
+        self.extension = ".png"
+        self.modality = "op"
+        self.mim = ("mim-light", "op")
+        self.scans_header = [
+            "ScanFile",
+            "BodyPart",
+            "SeriesNumber",
+            "AccessionNumber",
+            "Manufacturer",
+            "ManufacturerModelName",
+            "Modality",
+            "Columns",
+            "Rows",
+            "PhotometricInterpretation",
+            "Laterality",
+        ]
 
     def get_name(
         self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
@@ -103,7 +72,6 @@ class OphthalmographyProcedures(Procedures):
         else:
             bp = ""
         lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
-        vp = ""  # f"vp-{dataset.data_element('ViewPosition')}" if dataset.data_element("ViewPosition") else ""
         chunk = (
             f"chunk-{dataset.InstanceNumber}"
             if dataset.data_element("InstanceNumber") and self.use_chunk
@@ -111,7 +79,7 @@ class OphthalmographyProcedures(Procedures):
         )
         mod = modality
         filename = "_".join(
-            [part for part in [sub, ses, run, bp, lat, vp, chunk, mod] if part != ""]
+            [part for part in [sub, ses, run, bp, lat, chunk, mod] if part != ""]
         )
         return (
             self.mids_path.joinpath(sub, ses, *mim, filename),
@@ -132,28 +100,40 @@ class OphthalmographyProcedures(Procedures):
         image = sitk.ReadImage(instance.path)
         sitk.WriteImage(image, file_path_mids)
 
-    def get_scan_metadata(self, dataset, file_path_mids):
-        subs = lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+    def get_scan_metadata(
+        self, dataset: Dataset, file_path_mids: Path
+    ) -> Dict[str, str]:
+        """
+        Extracts metadata from a scan and returns it in a dictionary.
+
+        :param dataset: The dataset to extract metadata from.
+        :type dataset: pydicom.Dataset
+        :param file_path_mids: The path where to save the image file.
+        :type file_path_mids: pathlib.Path
+        :return: A dictionary containing the extracted metadata.
+        :rtype: dict
+        """
+
+        bodypart = (
+            dataset.BodyPartExamined if "BodyPartExamined" in dataset else self.bodypart
+        )
+        tag_values = [
+            (dataset[i].value if i in dataset else "n/a") for i in self.scans_header[2:]
+        ]
+        header_values = [
+            str(file_path_mids.with_suffix(self.extension)),
+            bodypart,
+            *tag_values,
+        ]
         return {
-            subs(key): value
+            pascal_to_snake_case(key): value
             for key, value in zip(
                 self.scans_header,
-                [
-                    str(file_path_mids.with_suffix(".png")),
-                    (
-                        dataset.BodyPartExamined
-                        if "BodyPartExamined" in dataset
-                        else self.bodypart
-                    ),
-                    *[
-                        (dataset[i].value if i in dataset else "n/a")
-                        for i in self.scans_header[2:]
-                    ],
-                ],
+                header_values,
             )
         }
 
-    def run(self, instance_list: List[FileInstance]):
+    def run(self, instance_list: List[FileInstance]) -> List[Dict[str, str]]:
         """
         Runs the image conversion pipeline on a list of instances.
 
@@ -164,16 +144,16 @@ class OphthalmographyProcedures(Procedures):
         self.use_chunk = len(instance_list) > 1
         list_scan_metadata = []
         for instance in instance_list:
+            logger.debug("Processing instance %s", instance.path)
             dataset = instance.load()
-            modality, mim = self.classify_image_type(instance)
             file_path_mids, session_absolute_path_mids = self.get_name(
-                dataset, modality, mim
+                dataset, self.modality, self.mim
             )
-            self.convert_to_image(instance, file_path_mids.with_suffix(".png"))
+            self.convert_to_image(instance, file_path_mids.with_suffix(self.extension))
             self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
             file_path_relative_mids = file_path_mids.relative_to(
                 session_absolute_path_mids
-            ).with_suffix(".png")
+            ).with_suffix(self.extension)
             list_scan_metadata.append(
                 self.get_scan_metadata(dataset, file_path_relative_mids)
             )

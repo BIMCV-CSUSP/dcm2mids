@@ -43,7 +43,7 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
             if not ds.StudyID:
                 logger.warning(
                     "`StudyID` tag not found for file %s. `AccessionNumber` will be used instead.",
-                    filename,
+                    filename.relative_to(input_dir),
                 )
                 ds.StudyID = ds.AccessionNumber
             fs.add(ds)
