@@ -1,16 +1,20 @@
+import logging
+import re
 from pathlib import Path
 from typing import List, Tuple
 
-import dicom2nifti as d2n
 import SimpleITK as sitk
 from pydicom import Dataset
 from pydicom.fileset import FileInstance
 
-from .. import Procedures
+from ..procedures import Procedures
+
+logger = logging.getLogger("dcm2mids").getChild("ophthalmography_procedure")
 
 
-class GeneralRadiologicProcedures(Procedures):
-    """Conversion logic for General Radiologic Imaging procedures."""
+class OphthalmographyProcedures(Procedures):
+    """Conversion logic for Visible Light Imaging procedures."""
+
     def __init__(
         self,
         mids_path: Path,
@@ -20,7 +24,7 @@ class GeneralRadiologicProcedures(Procedures):
     ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
 
-    def classify_image_type( 
+    def classify_image_type(
         self, instance: FileInstance
     ) -> Tuple[str, Tuple[str, ...]]:
         """
@@ -31,70 +35,41 @@ class GeneralRadiologicProcedures(Procedures):
         :returns: A tuple containing the image type and a tuple of labels for that type.
         :rtype: tuple[str, tuple[str, ...]]
         """
-        if instance.Modality in ["CR", "DX"]:
+
+        logger.debug("Processing instance %s", instance.path)
+        logger.debug("Instance modality: %s", instance.Modality)
+        if instance.Modality in ["OP", "SC", "XC", "OT"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'ViewPosition',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'Laterality',
-                'KVP',
-                'Exposure',
-                'ExposureTime',
-                'XRayTubeCurrent'
+                "ScanFile",
+                "BodyPart",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "Laterality",
             ]
-            return (
-                instance.Modality.lower(), 
-                (instance.Modality.lower(),) if self.bodypart in ["head", "brain", "skull"] else (
-                    "mim-rx", instance.Modality.lower(), ),
-                ".png",
-            )
-        
-        if instance.Modality in ["CT"]:
+            return ("op", ("mim-light", "op"))
+        if instance.Modality in ["BF", "SM"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'ViewPosition',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'Laterality',
-                'KVP',
-                'Exposure'
-                'ExposureTime',
-                'XRayTubeCurrent',
-                'DataCollectionDiameter',
-                'ReconstructionDiameter',
-                'SliceThickness',
-                'ConvolutionKernel',
-                'ReconstructionAlgorithm',
-                'DistanceSourceToDetector'
-                'Image Orientation',
-                'SmallestImagePixelValue',
-                'LargestImagePixelValue',
-                'WindowCenter',
-                'WindowWidth',
+                "ScanFile",
+                "BodyPart",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "ImagedVolumeHeight",
+                "ImagedVolumeWeight",
             ]
-            return(
-                instance.Modality.lower(), 
-                (instance.Modality.lower(),) if self.bodypart in ["head", "brain", "skull"] else (
-                    "mim-rx", instance.Modality.lower(), ),
-                ".nii.gz",
-            )
-        return ("", tuple(), "")
-    
+            return ("BF", ("micr",))
+        return ("", tuple())
 
     def get_name(
         self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
@@ -128,7 +103,7 @@ class GeneralRadiologicProcedures(Procedures):
         else:
             bp = ""
         lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
-        vp = f"vp-{convert_orientation(dataset.data_element('ImageOrientationPatient'))[0]}" if dataset.data_element("ImageOrientationPatient") else ""
+        vp = ""  # f"vp-{dataset.data_element('ViewPosition')}" if dataset.data_element("ViewPosition") else ""
         chunk = (
             f"chunk-{dataset.InstanceNumber}"
             if dataset.data_element("InstanceNumber") and self.use_chunk
@@ -152,16 +127,33 @@ class GeneralRadiologicProcedures(Procedures):
         :param file_path_mids: The path where the converted image will be saved.
         :type file_path_mids: pathlib.Path
         """
-        if "".join(file_path_mids.suffixes) == ".nii.gz":
-            pass
-        else:
-            file_path_mids.parent.mkdir(parents=True, exist_ok=True)
-            image = sitk.ReadImage(instance.path)
-            sitk.WriteImage(image, file_path_mids)
 
+        file_path_mids.parent.mkdir(parents=True, exist_ok=True)
+        image = sitk.ReadImage(instance.path)
+        sitk.WriteImage(image, file_path_mids)
 
+    def get_scan_metadata(self, dataset, file_path_mids):
+        subs = lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+        return {
+            subs(key): value
+            for key, value in zip(
+                self.scans_header,
+                [
+                    str(file_path_mids.with_suffix(".png")),
+                    (
+                        dataset.BodyPartExamined
+                        if "BodyPartExamined" in dataset
+                        else self.bodypart
+                    ),
+                    *[
+                        (dataset[i].value if i in dataset else "n/a")
+                        for i in self.scans_header[2:]
+                    ],
+                ],
+            )
+        }
 
-def run(self, instance_list: List[Tuple[int, FileInstance]]):
+    def run(self, instance_list: List[FileInstance]):
         """
         Runs the image conversion pipeline on a list of instances.
 
@@ -171,15 +163,13 @@ def run(self, instance_list: List[Tuple[int, FileInstance]]):
 
         self.use_chunk = len(instance_list) > 1
         list_scan_metadata = []
-        for _, instance in sorted(instance_list, key=lambda x: x[0]):
-            print(instance)
+        for instance in instance_list:
             dataset = instance.load()
-            modality, mim, ext = self.classify_image_type(instance)
+            modality, mim = self.classify_image_type(instance)
             file_path_mids, session_absolute_path_mids = self.get_name(
                 dataset, modality, mim
             )
-            
-            self.convert_to_image(instance, file_path_mids.with_suffix(ext))
+            self.convert_to_image(instance, file_path_mids.with_suffix(".png"))
             self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
             file_path_relative_mids = file_path_mids.relative_to(
                 session_absolute_path_mids
@@ -187,14 +177,12 @@ def run(self, instance_list: List[Tuple[int, FileInstance]]):
             list_scan_metadata.append(
                 self.get_scan_metadata(dataset, file_path_relative_mids)
             )
+            logger.info(
+                "Successfully processed instance %s",
+                instance.path,
+            )
+            logger.info(
+                "Saved to %s",
+                file_path_relative_mids.stem,
+            )
         return list_scan_metadata
-
-def convert_orientation(orientation):
-    mapping = {
-        "1\\0\\0\\0\\1\\0": ("Sag", "LAS"),  # Left-Anterior-Superior
-        "0\\1\\0\\0\\0\\-1": ("Cor", "RAS"),  # Right-Anterior-Superior
-        "1\\0\\0\\0\\0\\-1": ("Ax", "PAS"),  # Posterior-Anterior-Superior
-        # Add more mappings as needed
-    }
-    return mapping.get(orientation, ("Unknown", "Unknown"))
-    

@@ -1,15 +1,10 @@
 import argparse
+import logging
 from pathlib import Path
 
 from .create_mids_directory import create_mids_directory
 from .get_dicomdir import get_dicomdir
-
-
-def main():
-    """
-    Main entry point allowing external calls
-    """
-
+from .logger import set_logger
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -27,7 +22,7 @@ parser.add_argument(
     "--body-part",
     dest="body_part",
     type=str,
-    help="""Specify which part of the body are in the dataset(REQUIRED)""",
+    help="Specify which part of the body is in the dataset",
     required=True,
 )
 parser.add_argument(
@@ -35,9 +30,23 @@ parser.add_argument(
     "--bids",
     dest="bids",
     action="store_true",
-    help="use BIDS standard. Only applicable for protocols/body parts considered in BIDS.",
+    help="Use BIDS standard. Only applicable for protocols/body parts considered in BIDS.",
+)
+parser.add_argument(
+    "-v",
+    "--verbose",
+    dest="verbose",
+    choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+    default="INFO",
+    help="Verbose level. One of DEBUG, INFO, WARNING, ERROR",
+)
+parser.add_argument(
+    "-log", "--logfile", type=Path, help="Path to the file to store logs"
 )
 args = parser.parse_args()
+
+log_level = getattr(logging, args.verbose)
+root_logger = set_logger(level=log_level, outpath=args.logfile)
 
 fileset = get_dicomdir(args.input)
 

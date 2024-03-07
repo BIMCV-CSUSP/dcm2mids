@@ -1,16 +1,16 @@
-import re
+import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
-import SimpleITK as sitk
-from pydicom import Dataset
 from pydicom.fileset import FileInstance
-from shutil import copyfile
-from .. import Procedures
+
+from ..procedures import Procedures
+
+logger = logging.getLogger("dcm2mids").getChild("tomography_procedure")
 
 
-class VisibleLightProcedures(Procedures):
-    """Conversion logic for Visible Light Imaging procedures."""
+class TomographyProcedures(Procedures):
+    """Conversion logic for General Radiologic Imaging procedures."""
 
     def __init__(
         self,
@@ -23,7 +23,7 @@ class VisibleLightProcedures(Procedures):
 
     def classify_image_type(
         self, instance: FileInstance
-    ) -> Tuple[str, Tuple[str, ...], str]:
+    ) -> Tuple[str, Tuple[str, ...]]:
         """
         Classifies an image based on its modality.
 
@@ -32,39 +32,70 @@ class VisibleLightProcedures(Procedures):
         :returns: A tuple containing the image type and a tuple of labels for that type.
         :rtype: tuple[str, tuple[str, ...]]
         """
-        print(instance)
-        if instance.Modality in ["OP", "SC", "XC", "OT"]:
+        if instance.Modality in ["CR", "DX"]:
             self.scans_header = [
-                "ScanFile",
-                "BodyPart",
-                "SeriesNumber",
-                "AccessionNumber",
-                "Manufacturer",
-                "ManufacturerModelName",
-                "Modality",
-                "Columns",
-                "Rows",
-                "PhotometricInterpretation",
-                "Laterality",
+                'ScanFile',
+                'BodyPart',
+                'ViewPosition',
+                'SeriesNumber',
+                'AccessionNumber',
+                'Manufacturer',
+                'ManufacturerModelName',
+                'Modality',
+                'Columns',
+                'Rows',
+                'PhotometricInterpretation',
+                'Laterality',
+                'KVP',
+                'Exposure',
+                'ExposureTime',
+                'XRayTubeCurrent'
             ]
-            return ("op", ("mim-light", "op"), ".png")
-        if instance.Modality in ["BF", "SM"]:
+            return (
+                instance.Modality.lower(), 
+                (instance.Modality.lower(),) if self.bodypart in ["head", "brain", "skull"] else (
+                    "mim-rx", instance.Modality.lower(), ),
+                ".png",
+            )
+        
+        if instance.Modality in ["CT"]:
             self.scans_header = [
-                "ScanFile",
-                "BodyPart",
-                "SeriesNumber",
-                "AccessionNumber",
-                "Manufacturer",
-                "ManufacturerModelName",
-                "Modality",
-                "Columns",
-                "Rows",
-                "PhotometricInterpretation",
-                "ImagedVolumeHeight",
-                "ImagedVolumeWeight",
+                'ScanFile',
+                'BodyPart',
+                'ViewPosition',
+                'SeriesNumber',
+                'AccessionNumber',
+                'Manufacturer',
+                'ManufacturerModelName',
+                'Modality',
+                'Columns',
+                'Rows',
+                'PhotometricInterpretation',
+                'Laterality',
+                'KVP',
+                'Exposure'
+                'ExposureTime',
+                'XRayTubeCurrent',
+                'DataCollectionDiameter',
+                'ReconstructionDiameter',
+                'SliceThickness',
+                'ConvolutionKernel',
+                'ReconstructionAlgorithm',
+                'DistanceSourceToDetector'
+                'Image Orientation',
+                'SmallestImagePixelValue',
+                'LargestImagePixelValue',
+                'WindowCenter',
+                'WindowWidth',
             ]
-            return ("BF", ("micr",), ".dcm")
+            return(
+                instance.Modality.lower(), 
+                (instance.Modality.lower(),) if self.bodypart in ["head", "brain", "skull"] else (
+                    "mim-rx", instance.Modality.lower(), ),
+                ".nii.gz",
+            )
         return ("", tuple(), "")
+    
 
     def get_name(
         self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
@@ -98,7 +129,7 @@ class VisibleLightProcedures(Procedures):
         else:
             bp = ""
         lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
-        vp = ""  # f"vp-{dataset.data_element('ViewPosition')}" if dataset.data_element("ViewPosition") else ""
+        vp = f"vp-{convert_orientation(dataset.data_element('ImageOrientationPatient'))[0]}" if dataset.data_element("ImageOrientationPatient") else ""
         chunk = (
             f"chunk-{dataset.InstanceNumber}"
             if dataset.data_element("InstanceNumber") and self.use_chunk
@@ -122,35 +153,16 @@ class VisibleLightProcedures(Procedures):
         :param file_path_mids: The path where the converted image will be saved.
         :type file_path_mids: pathlib.Path
         """
-        if file_path_mids.suffix == ".dcm":
-            copyfile(instance.path, file_path_mids)
+        if "".join(file_path_mids.suffixes) == ".nii.gz":
+            pass
         else:
             file_path_mids.parent.mkdir(parents=True, exist_ok=True)
             image = sitk.ReadImage(instance.path)
             sitk.WriteImage(image, file_path_mids)
 
-    def get_scan_metadata(self, dataset, file_path_mids):
-        subs = lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
-        return {
-            subs(key): value
-            for key, value in zip(
-                self.scans_header,
-                [
-                    str(file_path_mids.with_suffix(".png")),
-                    (
-                        dataset.BodyPartExamined
-                        if "BodyPartExamined" in dataset
-                        else self.bodypart
-                    ),
-                    *[
-                        (dataset[i].value if i in dataset else "n/a")
-                        for i in self.scans_header[2:]
-                    ],
-                ],
-            )
-        }
 
-    def run(self, instance_list: List[Tuple[int, FileInstance]]):
+
+def run(self, instance_list: List[Tuple[int, FileInstance]]):
         """
         Runs the image conversion pipeline on a list of instances.
 
@@ -177,3 +189,13 @@ class VisibleLightProcedures(Procedures):
                 self.get_scan_metadata(dataset, file_path_relative_mids)
             )
         return list_scan_metadata
+
+def convert_orientation(orientation):
+    mapping = {
+        "1\\0\\0\\0\\1\\0": ("Sag", "LAS"),  # Left-Anterior-Superior
+        "0\\1\\0\\0\\0\\-1": ("Cor", "RAS"),  # Right-Anterior-Superior
+        "1\\0\\0\\0\\0\\-1": ("Ax", "PAS"),  # Posterior-Anterior-Superior
+        # Add more mappings as needed
+    }
+    return mapping.get(orientation, ("Unknown", "Unknown"))
+    

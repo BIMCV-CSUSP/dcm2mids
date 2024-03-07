@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -13,14 +14,11 @@ from .generate_tsvs import (
     save_scans_tsv,
     save_session_tsv,
 )
-from .procedures.magnetic_resonance.magnetic_resonance_procedure import (
-    MagneticResonanceProcedures
-)
-from .procedures.visible_light.visible_light_procedure import (
-    VisibleLightProcedures
-)
+from .procedures import *
 
-# TODO: Add the logic to create the MIDS directory structure.
+logger = logging.getLogger(__name__)
+
+
 def create_mids_directory(
     fileset: FileSet, mids_path: Union[Path, str], bodypart: str
 ) -> None:
@@ -37,43 +35,57 @@ def create_mids_directory(
     :rtype: None
     """
 
-    use_bodypart = len(fileset.find_values("BodyPartExamined")) > 1  ### []
-    use_viewposition = len(fileset.find_values("ViewPosition")) > 1  ### []
-    #  procedure_MR = ProceduresMagneticResonance(mids_path, bodypart)
+    use_bodypart = len(fileset.find_values("BodyPartExamined", load=True)) > 1
+    logger.debug("`BodyPartExamined` tag: %s", use_bodypart)
+    use_viewposition = len(fileset.find_values("ViewPosition", load=True)) > 1
+    logger.debug("`ViewPosition` tag: %s", use_bodypart)
     mids_path = Path(mids_path)
-    procedure_VL = VisibleLightProcedures(
-        mids_path, bodypart, use_bodypart, use_viewposition
-    )
-    procedure_RX = general_radiology_procedure(mids_path, bodypart)
     participants = []
     for subject in fileset.find_values("PatientID"):
+        logger.debug("Subject: %s", subject)
         participant = {}
         sessions = []
         for session in fileset.find_values("StudyID", fileset.find(PatientID=subject)):
+            logger.debug("Session: %s", session)
             scans = []
             for scan in fileset.find_values(
                 "SeriesNumber", fileset.find(PatientID=subject, StudyID=session)
             ):
-                print(f"  {scan=}")
-                instance_list = []
-                for instance in fileset.find(
+                logger.debug("Scan: %s", scan)
+                instance_list = fileset.find(
                     PatientID=subject, StudyID=session, SeriesNumber=scan
-                ):
-                    try:
-                        instance_number = int(instance.InstanceNumber)
-                    except (AttributeError, ValueError):
-                        instance_number = -1
-                    instance_list.append((instance_number, instance))
-
-                if instance_list[0][1].Modality == "MR":
-                    pass
-                if instance_list[0][1].Modality in ["CR", "DX", "CT", "PT"]:
-                    scans_row = procedure_RX.run(instance_list)
-                    
-                if instance_list[0][1].Modality in ["OP", "SC", "XC", "OT", "SM", "BF"]:
-                    scans_row = procedure_VL.run(instance_list)
+                )
+                instance_list = sorted(
+                    instance_list, key=lambda x: int(x.InstanceNumber)
+                )
+                if instance_list[0].Modality == "MR":
+                    scans_row = MagneticResonanceProcedures(
+                        mids_path, bodypart, use_bodypart, use_viewposition
+                    ).run(instance_list)
+                if instance_list[0].Modality in ["CR", "DX"]:
+                    scans_row = ConventionalRadiologyProcedures(
+                        mids_path, bodypart, use_bodypart, use_viewposition
+                    ).run(instance_list)
+                if instance_list[0].Modality in ["CT", "PT"]:
+                    scans_row = TomographyProcedures(
+                        mids_path, bodypart, use_bodypart, use_viewposition
+                    ).run(instance_list)
+                if instance_list[0].Modality in ["OP", "SC", "XC", "OT"]:
+                    scans_row = OphthalmographyProcedures(
+                        mids_path, bodypart, use_bodypart, use_viewposition
+                    ).run(instance_list)
+                if instance_list[0].Modality in ["SM", "BF"]:
+                    scans_row = MicroscopyProcedures(
+                        mids_path, bodypart, use_bodypart, use_viewposition
+                    ).run(instance_list)
                 scans.extend(scans_row)
             save_scans_tsv(scans, mids_path, subject, session)  # type: ignore
+            logger.debug(
+                "%d scans created from session %s in subject %s.",
+                len(scans),
+                session,
+                subject,
+            )
             session_row = get_session_row(fileset, subject, session)  # type: ignore
             patient_age = session_row["age"]
             if "age" not in participant:
@@ -81,11 +93,15 @@ def create_mids_directory(
             participant["age"].append(patient_age)
             participant_birthday = session_row.pop("PatientBirthDate")
             sessions.append(session_row)
-            print(f"{scans=}")
         save_session_tsv(sessions, mids_path, subject)  # type: ignore
+        logger.debug(
+            "%d sessions created from subject %s.",
+            len(sessions),
+            subject,
+        )
         participant = get_participant_row(
             participant, fileset, subject, bodypart, participant_birthday  # type: ignore
         )
         participants.append(participant)
     save_participant_tsv(participants, mids_path)
-    print(f"{participants=}")
+    logger.debug("%d participants processed.", len(participants))
