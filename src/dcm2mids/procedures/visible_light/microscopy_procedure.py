@@ -1,12 +1,12 @@
 import logging
 import re
 from pathlib import Path
+from shutil import copyfile
 from typing import List, Tuple
 
 import SimpleITK as sitk
 from pydicom import Dataset
 from pydicom.fileset import FileInstance
-from shutil import copyfile
 
 from ..procedures import Procedures
 
@@ -172,7 +172,7 @@ class MicroscopyProcedures(Procedures):
             file_path_mids, session_absolute_path_mids = self.get_name(
                 dataset, modality, mim
             )
-            
+
             self.convert_to_image(instance, file_path_mids.with_suffix(ext))
             self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
             file_path_relative_mids = file_path_mids.relative_to(
