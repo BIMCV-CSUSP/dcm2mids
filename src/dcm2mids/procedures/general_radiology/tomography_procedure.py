@@ -1,7 +1,8 @@
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
+from pydicom import Dataset
 from pydicom.fileset import FileInstance
 
 from ..procedures import Procedures
@@ -52,68 +53,77 @@ class TomographyProcedures(Procedures):
         """
         if instance.Modality in ["CR", "DX"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'ViewPosition',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'Laterality',
-                'KVP',
-                'Exposure',
-                'ExposureTime',
-                'XRayTubeCurrent'
+                "ScanFile",
+                "BodyPart",
+                "ViewPosition",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "Laterality",
+                "KVP",
+                "Exposure",
+                "ExposureTime",
+                "XRayTubeCurrent",
             ]
             return (
-                instance.Modality.lower(), 
-                (instance.Modality.lower(),) if self.bodypart in ["head", "brain", "skull"] else (
-                    "mim-rx", instance.Modality.lower(), ),
+                instance.Modality.lower(),
+                (
+                    (instance.Modality.lower(),)
+                    if self.bodypart in ["head", "brain", "skull"]
+                    else (
+                        "mim-rx",
+                        instance.Modality.lower(),
+                    )
+                ),
                 ".png",
             )
-        
+
         if instance.Modality in ["CT"]:
             self.scans_header = [
-                'ScanFile',
-                'BodyPart',
-                'ViewPosition',
-                'SeriesNumber',
-                'AccessionNumber',
-                'Manufacturer',
-                'ManufacturerModelName',
-                'Modality',
-                'Columns',
-                'Rows',
-                'PhotometricInterpretation',
-                'Laterality',
-                'KVP',
-                'Exposure'
-                'ExposureTime',
-                'XRayTubeCurrent',
-                'DataCollectionDiameter',
-                'ReconstructionDiameter',
-                'SliceThickness',
-                'ConvolutionKernel',
-                'ReconstructionAlgorithm',
-                'DistanceSourceToDetector'
-                'Image Orientation',
-                'SmallestImagePixelValue',
-                'LargestImagePixelValue',
-                'WindowCenter',
-                'WindowWidth',
+                "ScanFile",
+                "BodyPart",
+                "ViewPosition",
+                "SeriesNumber",
+                "AccessionNumber",
+                "Manufacturer",
+                "ManufacturerModelName",
+                "Modality",
+                "Columns",
+                "Rows",
+                "PhotometricInterpretation",
+                "Laterality",
+                "KVP",
+                "Exposure" "ExposureTime",
+                "XRayTubeCurrent",
+                "DataCollectionDiameter",
+                "ReconstructionDiameter",
+                "SliceThickness",
+                "ConvolutionKernel",
+                "ReconstructionAlgorithm",
+                "DistanceSourceToDetector" "Image Orientation",
+                "SmallestImagePixelValue",
+                "LargestImagePixelValue",
+                "WindowCenter",
+                "WindowWidth",
             ]
-            return(
-                instance.Modality.lower(), 
-                (instance.Modality.lower(),) if self.bodypart in ["head", "brain", "skull"] else (
-                    "mim-rx", instance.Modality.lower(), ),
+            return (
+                instance.Modality.lower(),
+                (
+                    (instance.Modality.lower(),)
+                    if self.bodypart in ["head", "brain", "skull"]
+                    else (
+                        "mim-rx",
+                        instance.Modality.lower(),
+                    )
+                ),
                 ".nii.gz",
             )
         return ("", tuple(), "")
-    
 
     def get_name(
         self, dataset: Dataset, modality: str, mim: Tuple[str, ...]
@@ -147,7 +157,11 @@ class TomographyProcedures(Procedures):
         else:
             bp = ""
         lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
-        vp = f"vp-{convert_orientation(dataset.data_element('ImageOrientationPatient'))[0]}" if dataset.data_element("ImageOrientationPatient") else ""
+        vp = (
+            f"vp-{convert_orientation(dataset.data_element('ImageOrientationPatient'))[0]}"
+            if dataset.data_element("ImageOrientationPatient")
+            else ""
+        )
         chunk = (
             f"chunk-{dataset.InstanceNumber}"
             if dataset.data_element("InstanceNumber") and self.use_chunk
@@ -179,34 +193,34 @@ class TomographyProcedures(Procedures):
             sitk.WriteImage(image, file_path_mids)
 
 
-
 def run(self, instance_list: List[Tuple[int, FileInstance]]):
-        """
-        Runs the image conversion pipeline on a list of instances.
+    """
+    Runs the image conversion pipeline on a list of instances.
 
-        :param instance_list: A list of tuples containing the instance number and the DICOM instance.
-        :type instance_list: list[uuple[int, pydicom.fileset.FileInstance]]
-        """
+    :param instance_list: A list of tuples containing the instance number and the DICOM instance.
+    :type instance_list: list[uuple[int, pydicom.fileset.FileInstance]]
+    """
 
-        self.use_chunk = len(instance_list) > 1
-        list_scan_metadata = []
-        for _, instance in sorted(instance_list, key=lambda x: x[0]):
-            print(instance)
-            dataset = instance.load()
-            modality, mim, ext = self.classify_image_type(instance)
-            file_path_mids, session_absolute_path_mids = self.get_name(
-                dataset, modality, mim
-            )
-            
-            self.convert_to_image(instance, file_path_mids.with_suffix(ext))
-            self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
-            file_path_relative_mids = file_path_mids.relative_to(
-                session_absolute_path_mids
-            ).with_suffix(".png")
-            list_scan_metadata.append(
-                self.get_scan_metadata(dataset, file_path_relative_mids)
-            )
-        return list_scan_metadata
+    self.use_chunk = len(instance_list) > 1
+    list_scan_metadata = []
+    for _, instance in sorted(instance_list, key=lambda x: x[0]):
+        print(instance)
+        dataset = instance.load()
+        modality, mim, ext = self.classify_image_type(instance)
+        file_path_mids, session_absolute_path_mids = self.get_name(
+            dataset, modality, mim
+        )
+
+        self.convert_to_image(instance, file_path_mids.with_suffix(ext))
+        self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
+        file_path_relative_mids = file_path_mids.relative_to(
+            session_absolute_path_mids
+        ).with_suffix(".png")
+        list_scan_metadata.append(
+            self.get_scan_metadata(dataset, file_path_relative_mids)
+        )
+    return list_scan_metadata
+
 
 def convert_orientation(orientation):
     mapping = {
@@ -216,4 +230,3 @@ def convert_orientation(orientation):
         # Add more mappings as needed
     }
     return mapping.get(orientation, ("Unknown", "Unknown"))
-    

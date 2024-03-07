@@ -34,7 +34,7 @@ def set_logger(
     ch = logging.StreamHandler()
     ch.setLevel(level)
 
-    format_string = "%(asctime)s - %(name)s - %(levelname)-7s - %(message)s"
+    format_string = "[%(asctime)s] %(name)s - %(levelname)s: %(message)s"
 
     # Create colored formatter
     color_formatter = ColorFormatter(format_string)

@@ -1,7 +1,8 @@
 import logging
-from ..procedures import Procedures
+
 from dcm2mids.procedures.dictify import dictify
 
+from ..procedures import Procedures
 
 logger = logging.getLogger("dcm2mids").getChild("magnetic_resonance_procedure")
 
