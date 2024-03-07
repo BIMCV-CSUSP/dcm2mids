@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Tuple
 
+import dicom2nifti as d2n
 import SimpleITK as sitk
 from pydicom import Dataset
 from pydicom.fileset import FileInstance
@@ -142,8 +143,51 @@ class GeneralRadiologicProcedures(Procedures):
             self.mids_path.joinpath(sub, ses),
         )
 
+    def convert_to_image(self, instance: FileInstance, file_path_mids: Path):
+        """
+        Converts a DICOM to an image.
+
+        :param instance: The DICOM image instance.
+        :type instance: pydicom.fileset.FileInstance
+        :param file_path_mids: The path where the converted image will be saved.
+        :type file_path_mids: pathlib.Path
+        """
+        if "".join(file_path_mids.suffixes) == ".nii.gz":
+            pass
+        else:
+            file_path_mids.parent.mkdir(parents=True, exist_ok=True)
+            image = sitk.ReadImage(instance.path)
+            sitk.WriteImage(image, file_path_mids)
 
 
+
+def run(self, instance_list: List[Tuple[int, FileInstance]]):
+        """
+        Runs the image conversion pipeline on a list of instances.
+
+        :param instance_list: A list of tuples containing the instance number and the DICOM instance.
+        :type instance_list: list[uuple[int, pydicom.fileset.FileInstance]]
+        """
+
+        self.use_chunk = len(instance_list) > 1
+        list_scan_metadata = []
+        for _, instance in sorted(instance_list, key=lambda x: x[0]):
+            print(instance)
+            dataset = instance.load()
+            modality, mim, ext = self.classify_image_type(instance)
+            file_path_mids, session_absolute_path_mids = self.get_name(
+                dataset, modality, mim
+            )
+            
+            self.convert_to_image(instance, file_path_mids.with_suffix(ext))
+            self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
+            file_path_relative_mids = file_path_mids.relative_to(
+                session_absolute_path_mids
+            ).with_suffix(".png")
+            list_scan_metadata.append(
+                self.get_scan_metadata(dataset, file_path_relative_mids)
+            )
+        return list_scan_metadata
 
 def convert_orientation(orientation):
     mapping = {
