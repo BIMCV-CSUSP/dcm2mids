@@ -35,7 +35,7 @@ def create_mids_directory(
     participants = []
     for subject in fileset.find_values("PatientID"):
         logger.debug("Subject: %s", subject)
-        participant = {}
+        participant_ages = []
         sessions = []
         for session in fileset.find_values("StudyID", fileset.find(PatientID=subject)):
             logger.debug("Session: %s", session)
@@ -79,10 +79,8 @@ def create_mids_directory(
                 subject,
             )
             session_row = get_session_row(fileset, subject, session)  # type: ignore
-            patient_age = session_row["age"]
-            if "age" not in participant:
-                participant["age"] = []
-            participant["age"].append(patient_age)
+            participant_age = session_row["age"]
+            participant_ages.append(participant_age)
             participant_birthday = session_row.pop("PatientBirthDate")
             sessions.append(session_row)
         save_session_tsv(sessions, mids_path, subject)  # type: ignore
@@ -91,9 +89,9 @@ def create_mids_directory(
             len(sessions),
             subject,
         )
-        participant = get_participant_row(
-            participant, fileset, subject, bodypart, participant_birthday  # type: ignore
+        participant_row = get_participant_row(
+            fileset, subject, bodypart, participant_ages, participant_birthday  # type: ignore
         )
-        participants.append(participant)
+        participants.append(participant_row)
     save_participant_tsv(participants, mids_path)
     logger.debug("%d participants processed.", len(participants))

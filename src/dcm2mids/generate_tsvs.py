@@ -70,10 +70,10 @@ def get_session_row(fileset: FileSet, subject: str, session: str) -> Dict[str, s
 
 
 def get_participant_row(
-    participant: Dict[str, Union[str, list]],
     fileset: FileSet,
     subject: str,
     bodypart: str,
+    participant_ages: List[str],
     participant_birthday: str,
 ) -> Dict[str, Union[str, list]]:
     """
@@ -89,20 +89,20 @@ def get_participant_row(
     :type bodypart: str
     :param participant_birthday: The participant's birthday.
     :type participant_birthday: str
+    :param participant_ages: The participant's age at each session.
+    :type participant_ages: list[str]
     :return: A dictionary containing the participant row data.
     :rtype: dict
     """
 
+    participant = fileset.find_values(
+        ["Modality", "BodyPartExamined", "PatientSex"],
+        fileset.find(PatientID=subject),
+        load=True,
+    )
     participant["participant_id"] = f"sub-{subject}"
     participant["participant_pseudo_id"] = subject
-    participant["age"] = list(set(participant["age"]))
-    participant.update(
-        fileset.find_values(
-            ["Modality", "BodyPartExamined", "PatientSex"],
-            fileset.find(PatientID=subject),
-            load=True,
-        )
-    )
+    participant["age"] = list(set(participant_ages))
     participant["gender"] = list(set(participant.pop("PatientSex")))[0]
     if len(participant["BodyPartExamined"]) == 0:
         participant["BodyPartExamined"] = [bodypart]
