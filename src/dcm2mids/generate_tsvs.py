@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Union
@@ -5,20 +6,22 @@ from typing import Dict, List, Union
 import pandas as pd
 from pydicom.fileset import FileSet
 
+logger = logging.getLogger("dcm2mids").getChild("generate_tsvs")
+
 participants_header = [
     "participant_id",  # This is the participant_id from the BIDS/MIDS standard (sub-<participant_id>)
     "participant_pseudo_id",  # This is the participant_pseudo_id from the PatientID (participant_id)
-    "gender",  # This is the gender of the participant
+    "sex",  # This is the gender of the participant
     "participant_birthday",  # This is the patient's birthday
-    "age",  # this is the list of ages of the participant in the sessions
+    "ages",  # This is the list of ages of the participant in the sessions
     "modalities",  # This is the list of modalities used in the sessions
-    "body_part_examined",  # This is the list of body parts examined in the sessions
+    "body_parts_examined",  # This is the list of body parts examined in the sessions
 ]
 
 session_header = [
     "session_id",  # This is the session_id from the BIDS/MIDS standard (ses-<session_id>)
     "session_pseudo_id",  # This is the session_pseudo_id from the PatientID (session_id)
-    "session_date_time",  # This is the acquisition date time of the session
+    "acq_time",  # This is the acquisition date time of the session
     "age",  # this is the age of the participant in the session
 ]
 
@@ -38,12 +41,18 @@ def get_session_row(fileset: FileSet, subject: str, session: str) -> Dict[str, s
     """
 
     session_row = fileset.find_values(
-        ["StudyDate", "StudyTime", "PatientBirthDate"],
+        ["StudyDate", "StudyTime", "AcquisitionDateTime", "AcquisitionDate", "AcquisitionTime", "PatientBirthDate"],
         fileset.find(PatientID=subject, StudyID=session),
         load=True,
     )
     session_row["session_id"] = f"sub-{session}"
     session_row["session_pseudo_id"] = session
+    logger.info("AcquisitionDateTime: %s", session_row.get("AcquisitionDateTime"))
+    logger.info("AcquisitionDate: %s", session_row.get("AcquisitionDate"))
+    logger.info("AcquisitionTime: %s", session_row.get("AcquisitionTime"))
+    logger.info("StudyDate: %s", session_row.get("StudyDate"))
+    logger.info("StudyTime: %s", session_row.get("StudyTime"))
+
     date_time = session_row["StudyDate"][0] + session_row["StudyTime"][0]
     if "." not in date_time:
         date_time += ".000000"
@@ -63,7 +72,7 @@ def get_session_row(fileset: FileSet, subject: str, session: str) -> Dict[str, s
     session_row["PatientBirthDate"] = session_row["PatientBirthDate"].strftime(
         "%Y-%m-%d"
     )
-    session_row["session_date_time"] = session_row["session_date_time"].isoformat()
+    session_row["acq_time"] = session_row["session_date_time"].isoformat()
     session_row["age"] = patient_age
 
     return session_row
@@ -95,7 +104,7 @@ def get_participant_row(
 
     participant["participant_id"] = f"sub-{subject}"
     participant["participant_pseudo_id"] = subject
-    participant["age"] = list(set(participant["age"]))
+    participant["ages"] = list(set(participant["ages"]))
     participant.update(
         fileset.find_values(
             ["Modality", "BodyPartExamined", "PatientSex"],
@@ -103,12 +112,12 @@ def get_participant_row(
             load=True,
         )
     )
-    participant["gender"] = list(set(participant.pop("PatientSex")))[0]
+    participant["sex"] = list(set(participant.pop("PatientSex")))[0]
     if len(participant["BodyPartExamined"]) == 0:
         participant["BodyPartExamined"] = [bodypart]
     participant["participant_birthday"] = participant_birthday
     participant["modalities"] = participant.pop("Modality")
-    participant["body_part_examined"] = participant.pop("BodyPartExamined")
+    participant["body_parts_examined"] = participant.pop("BodyPartExamined")
     return participant
 
 
@@ -126,7 +135,7 @@ def save_session_tsv(sessions: List[Dict[str, str]], mids_path: Path, subject: s
 
     session_tsv = mids_path.joinpath(f"sub-{subject}", f"sub-{subject}_sessions.tsv")
     df = pd.DataFrame(sessions)[session_header]
-    df = df.sort_values("session_date_time", ascending=False)  # type: ignore
+    df = df.sort_values("acq_time", ascending=False)  # type: ignore
     session_tsv.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(session_tsv, sep="\t", index=False)
 
