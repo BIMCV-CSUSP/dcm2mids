@@ -82,8 +82,8 @@ def create_mids_directory(
             session_row = get_session_row(fileset, subject, session)  # type: ignore
             patient_age = session_row["age"]
             if "age" not in participant:
-                participant["age"] = []
-            participant["age"].append(patient_age)
+                participant["ages"] = []
+            participant["ages"].append(patient_age)
             participant_birthday = session_row.pop("PatientBirthDate")
             sessions.append(session_row)
         save_session_tsv(sessions, mids_path, subject)  # type: ignore
