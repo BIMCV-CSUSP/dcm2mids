@@ -41,7 +41,7 @@ class MicroscopyProcedures(Procedures):
         logger.debug("Instance modality: %s", instance.Modality)
         if instance.Modality in ["OP", "SC", "XC", "OT"]:
             self.scans_header = [
-                "ScanFile",
+                "Filename",
                 "BodyPart",
                 "SeriesNumber",
                 "AccessionNumber",
