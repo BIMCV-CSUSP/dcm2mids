@@ -22,7 +22,7 @@ class TomographyProcedures(Procedures):
     ):
         super().__init__(mids_path, bodypart, use_bodypart, use_viewposition)
         self.scans_header = [
-                'ScanFile',
+                'Filename',
                 'BodyPart',
                 'ViewPosition',
                 'SeriesNumber',
@@ -53,7 +53,7 @@ class TomographyProcedures(Procedures):
         """
         if instance.Modality in ["CR", "DX"]:
             self.scans_header = [
-                "ScanFile",
+                "Filename",
                 "BodyPart",
                 "ViewPosition",
                 "SeriesNumber",
