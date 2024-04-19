@@ -38,7 +38,8 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
         logger.info(
             "DICOMDIR file not found. Listing all `.dcm` files on the directory."
         )
-        for filename in input_dir.rglob("*.dcm"):
+        suffix = '*.[dD][cC][mM]'
+        for filename in input_dir.rglob(suffix):
             ds = dcmread(filename)
             if not ds.StudyID:
                 logger.warning(
