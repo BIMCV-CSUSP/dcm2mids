@@ -29,6 +29,10 @@ class Procedures(ABC):
     def get_name(self):
         pass
 
+    @abstractmethod
+    def run(self):
+        pass
+    
     @staticmethod
     def convert_to_jsonfile(dataset: Dataset, file_path_mids: Path):
         """
@@ -46,6 +50,4 @@ class Procedures(ABC):
         with open(file_path_mids, "w") as f:
             json.dump(json_dict, f, indent=4)
 
-    @abstractmethod
-    def run(self):
-        pass
+    
