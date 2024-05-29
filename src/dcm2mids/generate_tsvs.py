@@ -63,15 +63,22 @@ def get_session_row(fileset: FileSet, subject: str, session: str) -> Dict[str, s
         datetime.strptime(s, "%Y%m%d%H%M%S.%f")
         for s in session_row["session_date_time"]
     ][0]
-    session_row["PatientBirthDate"] = datetime.strptime(
-        session_row["PatientBirthDate"][0], "%Y%m%d"
-    )
-    patient_age = (
-        session_row["session_date_time"] - session_row["PatientBirthDate"]
-    ).days // 365.25
-    session_row["PatientBirthDate"] = session_row["PatientBirthDate"].strftime(
-        "%Y-%m-%d"
-    )
+    if session_row.get("PatientBirthDate")[0]:
+
+        session_row["PatientBirthDate"] = datetime.strptime(
+            session_row["PatientBirthDate"][0], "%Y%m%d"
+        )
+        patient_age = (
+            session_row["session_date_time"] - session_row["PatientBirthDate"]
+        ).days // 365.25
+
+        session_row["PatientBirthDate"] = session_row["PatientBirthDate"].strftime(
+            "%Y-%m-%d"
+        )
+    else:
+        session_row["PatientBirthDate"] = "n/a"
+        patient_age = "n/a"
+    
     session_row["acq_time"] = session_row["session_date_time"].isoformat()
     session_row["age"] = patient_age
 
