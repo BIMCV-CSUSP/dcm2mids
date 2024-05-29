@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Union
+from datetime import datetime
 
 from pydicom import dcmread
 from pydicom.fileset import FileSet
@@ -47,7 +48,25 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
                     filename,
                 )
                 ds.StudyID = ds.AccessionNumber
+            if not ds.StudyTime:
+                logger.warning(
+                    "`StudyTime` tag not found for file %s. Time part of `AdquisitionDateTime` will be used instead.",
+                    filename,
+                )
+                ds.StudyTime = datetime.strptime(ds.AcquisitionDateTime[:14], "%Y%m%d%H%M%S").strftime("%H%M%S")
+            if not ds.SeriesNumber:
+                logger.warning(
+                    "`SeriesNumber` tag not found for file %s. Time part of `InstanceNumber` will be used instead.",
+                    filename,
+                )
+                ds.SeriesNumber = ds.InstanceNumber
+            # try:
+            print(ds.StudyTime)
             fs.add(ds)
+            # except ValueError as e:
+            #     print(e)
+            #     continue
+                
     else:
         logger.error("%s is not a directory.", input_dir)
         raise NotADirectoryError(f"{input_dir} is not a directory.")
