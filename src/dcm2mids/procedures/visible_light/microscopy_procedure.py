@@ -58,7 +58,9 @@ class MicroscopyProcedures(Procedures):
             self.scans_header = [
                 "ScanFile",
                 "BodyPart",
+                "AcquisitionDateTime",
                 "SeriesNumber",
+                "InstanceNumber",
                 "AccessionNumber",
                 "Manufacturer",
                 "ManufacturerModelName",
@@ -103,7 +105,7 @@ class MicroscopyProcedures(Procedures):
             )
         else:
             bp = ""
-        lat = f"lat-{dataset.Laterality}" if dataset.data_element("Laterality") else ""
+        lat = f"lat-{dataset.Laterality}" if "Laterality" in dataset else ""
         vp = ""  # f"vp-{dataset.data_element('ViewPosition')}" if dataset.data_element("ViewPosition") else ""
         chunk = (
             f"chunk-{dataset.InstanceNumber}"
@@ -128,6 +130,7 @@ class MicroscopyProcedures(Procedures):
         :param file_path_mids: The path where the converted image will be saved.
         :type file_path_mids: pathlib.Path
         """
+        file_path_mids.parent.mkdir(parents=True, exist_ok=True)
         if file_path_mids.suffix == ".dcm":
             copyfile(instance.path, file_path_mids)
         else:
@@ -142,7 +145,7 @@ class MicroscopyProcedures(Procedures):
             for key, value in zip(
                 self.scans_header,
                 [
-                    str(file_path_mids.with_suffix(".png")),
+                    str(file_path_mids),
                     (
                         dataset.BodyPartExamined
                         if "BodyPartExamined" in dataset
@@ -177,7 +180,7 @@ class MicroscopyProcedures(Procedures):
             self.convert_to_jsonfile(dataset, file_path_mids.with_suffix(".json"))
             file_path_relative_mids = file_path_mids.relative_to(
                 session_absolute_path_mids
-            ).with_suffix(".png")
+            ).with_suffix(ext)
             list_scan_metadata.append(
                 self.get_scan_metadata(dataset, file_path_relative_mids)
             )
