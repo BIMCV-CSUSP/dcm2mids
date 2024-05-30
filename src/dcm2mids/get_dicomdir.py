@@ -39,7 +39,7 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
         logger.info(
             "DICOMDIR file not found. Listing all `.dcm` files on the directory."
         )
-        suffix = '*.[dD][cC][mM]'
+        suffix = "*.[dD][cC][mM]"
         for filename in input_dir.rglob(suffix):
             ds = dcmread(filename)
             if not ds.StudyID:
@@ -53,7 +53,9 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
                     "`StudyTime` tag not found for file %s. Time part of `AdquisitionDateTime` will be used instead.",
                     filename,
                 )
-                ds.StudyTime = datetime.strptime(ds.AcquisitionDateTime[:14], "%Y%m%d%H%M%S").strftime("%H%M%S")
+                ds.StudyTime = datetime.strptime(
+                    ds.AcquisitionDateTime[:14], "%Y%m%d%H%M%S"
+                ).strftime("%H%M%S")
             if not ds.SeriesNumber:
                 logger.warning(
                     "`SeriesNumber` tag not found for file %s. Time part of `InstanceNumber` will be used instead.",
@@ -61,12 +63,12 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
                 )
                 ds.SeriesNumber = ds.InstanceNumber
             # try:
-            print(ds.StudyTime)
+
             fs.add(ds)
             # except ValueError as e:
             #     print(e)
             #     continue
-                
+
     else:
         logger.error("%s is not a directory.", input_dir)
         raise NotADirectoryError(f"{input_dir} is not a directory.")
