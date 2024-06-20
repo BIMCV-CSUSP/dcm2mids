@@ -1,4 +1,5 @@
 import json
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from pydicom import Dataset
 
 from .dictify import dictify
 
-
+logger = logging.getLogger("dcm2mids").getChild("procedures")
 class Procedures(ABC):
     def __init__(
         self,
