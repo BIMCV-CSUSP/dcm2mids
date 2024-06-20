@@ -67,6 +67,7 @@ class OphthalmographyProcedures(Procedures):
                 "PhotometricInterpretation",
                 "ImagedVolumeHeight",
                 "ImagedVolumeWeight",
+                "NumberOfFrames"
             ]
             return ("BF", ("micr",))
         return ("", tuple())
