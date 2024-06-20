@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 from datetime import datetime
 
 from pydicom import dcmread
@@ -9,7 +9,7 @@ from pydicom.fileset import FileSet
 logger = logging.getLogger(__name__)
 
 
-def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
+def get_dicomdir(input_dir: Union[Path, str], exclude_paths: List[Union[Path, str]] = None) -> FileSet:
     """
     Get the DICOM structure from the input directory.
 
@@ -25,6 +25,9 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
     if not input_dir.exists():
         logger.error("%s does not exist.", input_dir)
         raise FileNotFoundError(f"{input_dir} does not exist.")
+    if exclude_paths is not None:
+        exclude_paths = [Path(p) if not isinstance(p, Path) else p for p in exclude_paths]
+    
     dicomdir = input_dir / "DICOMDIR"
     if (
         dicomdir.exists()
@@ -41,7 +44,25 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
         )
         suffix = "*.[dD][cC][mM]"
         for filename in input_dir.rglob(suffix):
+            
+            
+            if exclude_paths and any(filename.is_relative_to(exclude_path) for exclude_path in exclude_paths): continue
             ds = dcmread(filename)
+            txt_file = filename.parent / "note.txt"
+            with txt_file.open('r') as file:
+                txt_content = file.read()
+            if txt_content == "": txt_content = "n/a"
+            
+            # Reserve a private tag block
+            private_creator_tag = 0x000b  # (gggg,00XX) for reserving block
+            block = ds.private_block(private_creator_tag, 'Note', create=True)
+
+            # Define the private tag (for example, in the reserved block)
+            private_tag = 0x10  # (gggg,xxYY) where xxYY is within the reserved block
+
+            # Add the private tag with VR (e.g., LO for Long String) and value
+            block.add_new(private_tag, 'LO', txt_content)
+            ds.add_new
             if not ds.StudyID:
                 logger.warning(
                     "`StudyID` tag not found for file %s. `AccessionNumber` will be used instead.",
@@ -58,12 +79,12 @@ def get_dicomdir(input_dir: Union[Path, str]) -> FileSet:
                 ).strftime("%H%M%S")
             if not ds.SeriesNumber:
                 logger.warning(
-                    "`SeriesNumber` tag not found for file %s. Time part of `InstanceNumber` will be used instead.",
+                    "`SeriesNumber` tag not found for file %s. `InstanceNumber` will be used instead.",
                     filename,
                 )
                 ds.SeriesNumber = ds.InstanceNumber
             # try:
-
+            print(ds[(0x000b, 0x1010)])
             fs.add(ds)
             # except ValueError as e:
             #     print(e)
