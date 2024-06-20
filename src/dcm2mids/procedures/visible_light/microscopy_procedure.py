@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import re
 from pathlib import Path
@@ -70,6 +71,8 @@ class MicroscopyProcedures(Procedures):
                 "PhotometricInterpretation",
                 "ImagedVolumeHeight",
                 "ImagedVolumeWeight",
+                "NumberOfFrames",
+                "note",
             ]
             return ("BF", ("micr",), ".dcm")
         return ("", tuple(), "")
@@ -132,6 +135,7 @@ class MicroscopyProcedures(Procedures):
         """
         file_path_mids.parent.mkdir(parents=True, exist_ok=True)
         if file_path_mids.suffix == ".dcm":
+            print("instance.path", instance.path)
             copyfile(instance.path, file_path_mids)
         else:
             file_path_mids.parent.mkdir(parents=True, exist_ok=True)
@@ -151,10 +155,14 @@ class MicroscopyProcedures(Procedures):
                         if "BodyPartExamined" in dataset
                         else self.bodypart
                     ),
+                    datetime.strptime(
+                        dataset.AcquisitionDateTime[:14], "%Y%m%d%H%M%S"
+                    ).strftime("%Y-%m-%dT%H:%M:%S"),
                     *[
                         (dataset[i].value if i in dataset else "n/a")
-                        for i in self.scans_header[2:]
+                        for i in self.scans_header[3:]
                     ],
+                    dataset[(0x000b, 0x1010)].value,
                 ],
             )
         }
