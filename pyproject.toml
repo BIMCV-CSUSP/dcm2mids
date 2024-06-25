@@ -7,3 +7,23 @@ build-backend = "setuptools.build_meta"
 # For smarter version schemes and other configuration options,
 # check out https://github.com/pypa/setuptools_scm
 version_scheme = "no-guess-dev"
+
+[project]
+name = "dcm2mids"
+version = "v0.1.20062024"
+authors = [
+  { name="Jose Manuel Saborit Torres", email="josemanuel.saborit@fisabio.es" },
+  { name="Alejandro Mora Rubio", email="alejandro.mora@fisabio.es" },
+]
+description = "Tool for converting DICOM images to the BIDS/MIDS structure"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/BIMCV-CSUSP/dcm2mids"
+Issues = "https://github.com/BIMCV-CSUSP/dcm2mids/issues"
