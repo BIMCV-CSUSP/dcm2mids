@@ -49,8 +49,10 @@ def get_dicomdir(input_dir: Union[Path, str], exclude_paths: List[Union[Path, st
             if exclude_paths and any(filename.is_relative_to(exclude_path) for exclude_path in exclude_paths): continue
             ds = dcmread(filename)
             txt_file = filename.parent / "note.txt"
-            with txt_file.open('r') as file:
-                txt_content = file.read()
+            txt_content = ""
+            if txt_file.exists():
+                with txt_file.open('r') as file:
+                    txt_content = file.read()
             if txt_content == "": txt_content = "n/a"
             
             # Reserve a private tag block
