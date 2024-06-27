@@ -86,7 +86,6 @@ def get_dicomdir(input_dir: Union[Path, str], exclude_paths: List[Union[Path, st
                 )
                 ds.SeriesNumber = ds.InstanceNumber
             # try:
-            print(ds[(0x000b, 0x1010)])
             fs.add(ds)
             # except ValueError as e:
             #     print(e)
