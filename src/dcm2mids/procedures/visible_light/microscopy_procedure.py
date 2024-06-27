@@ -70,7 +70,7 @@ class MicroscopyProcedures(Procedures):
                 "Rows",
                 "PhotometricInterpretation",
                 "ImagedVolumeHeight",
-                "ImagedVolumeWeight",
+                "ImagedVolumeWidth",
                 "NumberOfFrames",
                 "note",
             ]
@@ -144,6 +144,7 @@ class MicroscopyProcedures(Procedures):
 
     def get_scan_metadata(self, dataset, file_path_mids):
         subs = lambda s: re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+        
         return {
             subs(key): value
             for key, value in zip(
@@ -160,12 +161,13 @@ class MicroscopyProcedures(Procedures):
                     ).strftime("%Y-%m-%dT%H:%M:%S"),
                     *[
                         (dataset[i].value if i in dataset else "n/a")
-                        for i in self.scans_header[3:]
+                        for i in self.scans_header[3:-1]
                     ],
                     dataset[(0x000b, 0x1010)].value,
                 ],
             )
         }
+        
 
     def run(self, instance_list: List[FileInstance]):
         """
