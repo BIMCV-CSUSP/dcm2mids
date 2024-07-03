@@ -47,11 +47,11 @@ def get_session_row(fileset: FileSet, subject: str, session: str) -> Dict[str, s
     )
     session_row["session_id"] = f"sub-{session}"
     session_row["session_pseudo_id"] = session
-    logger.info("AcquisitionDateTime: %s", session_row.get("AcquisitionDateTime"))
-    logger.info("AcquisitionDate: %s", session_row.get("AcquisitionDate"))
-    logger.info("AcquisitionTime: %s", session_row.get("AcquisitionTime"))
-    logger.info("StudyDate: %s", session_row.get("StudyDate"))
-    logger.info("StudyTime: %s", session_row.get("StudyTime"))
+    logger.debug("AcquisitionDateTime: %s", session_row.get("AcquisitionDateTime"))
+    logger.debug("AcquisitionDate: %s", session_row.get("AcquisitionDate"))
+    logger.debug("AcquisitionTime: %s", session_row.get("AcquisitionTime"))
+    logger.debug("StudyDate: %s", session_row.get("StudyDate"))
+    logger.debug("StudyTime: %s", session_row.get("StudyTime"))
 
     date_time = session_row["StudyDate"][0] + session_row["StudyTime"][0]
     if "." not in date_time:
