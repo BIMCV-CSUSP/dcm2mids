@@ -33,23 +33,25 @@ def create_mids_directory(
     logger.debug("`ViewPosition` tag: %s", use_bodypart)
     mids_path = Path(mids_path)
     participants = []
-    for subject in fileset.find_values("PatientID"):
+    for subject in fileset.find_values("PatientID", load=True):
         logger.debug("Subject: %s", subject)
         participant = {}
         sessions = []
-        for session in fileset.find_values("StudyID", fileset.find(PatientID=subject)):
+        for session in fileset.find_values("StudyID", fileset.find(PatientID=subject, load=True), load=True):
             logger.debug("Session: %s", session)
             scans = []
             for scan in fileset.find_values(
-                "SeriesNumber", fileset.find(PatientID=subject, StudyID=session)
+                "SeriesNumber", fileset.find(PatientID=subject, StudyID=session, load=True), load=True
             ):
                 logger.debug("Scan: %s", scan)
                 instance_list = fileset.find(
-                    PatientID=subject, StudyID=session, SeriesNumber=scan
+                    PatientID=subject, StudyID=session, SeriesNumber=scan,
+                    load=True
                 )
                 instance_list = sorted(
                     instance_list, key=lambda x: int(x.InstanceNumber)
                 )
+                logger.debug("Number of instances: %d", len(instance_list))
                 modality = instance_list[0].Modality
                 if modality == "MR":
                     scans_row = MagneticResonanceProcedures(
