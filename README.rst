@@ -62,37 +62,44 @@ If you need to install from git, Clone the repository and install from source as
 Usage
 ============
 
-### DCM2MIDS Script
-
+DCM2MIDS Script
+-------------------------------
 This script reads a folder containing medical images and converts them to a BIDS/MIDS structure. It is designed to streamline the organization and standardization of medical imaging data, ensuring compatibility with BIDS (Brain Imaging Data Structure) and MIDS (Medical Imaging Data Structure) standards.
 
-#### Arguments
+Arguments
+-------------------------------
 
 - **-i, --input**:
+
   - **Type**: str
   - **Description**: Path to the input folder containing the images in dicom format.
   - **Required**: Yes
 
 - **-o, --output**:
+
   - **Type**: str
   - **Description**: Path to the output folder where the converted images will be stored.
   - **Required**: Yes
 
 - **-bp, --body-part**:
+
   - **Type**: str
   - **Description**: Specify which part of the body is in the dataset.
   - **Required**: Yes
 
 - **-b, --bids**:
+
   - **Action**: store_true
   - **Description**: Use BIDS standard. Only applicable for protocols/body parts considered in BIDS.
 
 - **-v, --verbose**:
+
   - **Choices**: "DEBUG", "INFO", "WARNING", "ERROR"
   - **Default**: "INFO"
   - **Description**: Set the verbosity level of the script. Options are DEBUG, INFO, WARNING, ERROR.
 
 - **-log, --logfile**:
+
   - **Type**: Path
   - **Description**: Path to the file where logs will be stored.
 
