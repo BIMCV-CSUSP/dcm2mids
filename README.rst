@@ -38,7 +38,7 @@ dcm2mids
 
 
 
-instalation
+installation
 ============
 
 
@@ -48,7 +48,7 @@ To install the latest release from PyPI, use pip:
 
     pip install dcm2mids
 
-If you need install from git, Clone the repository and install from source as a pip package:
+If you need to install from git, Clone the repository and install from source as a pip package:
 
 .. code-block:: bash
 
@@ -134,7 +134,7 @@ GNU General Public License v3.0
     You should have received a copy of the GNU General Public License
     along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For a full copy of the license, refer to the `LICENSE` file included in this repository or visit the official GNU website at <https://www.gnu.org/licenses/gpl-3.0.html>.
+For a full license copy, refer to the `LICENSE` file included in this repository or visit the official GNU website at <https://www.gnu.org/licenses/gpl-3.0.html>.
 
 
 For questions or comments about dcm2mids, you can open an issue in the repository or contact the project maintainers directly.
@@ -143,6 +143,6 @@ Contact Options:
 
 Open an issue: Visit the Issues section of the repository and create a new issue describing your question or comment.
 
-Contact the maintainers: Send an email to the project maintainers. You can find their contact information on the main page of the repository or in the MAINTAINERS.md file.
+Contact the maintainers: Send an email to the project maintainers. You can find their contact information on the repository's main page or in the MAINTAINERS.md file.
 
 We look forward to your feedback and questions!
