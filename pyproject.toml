@@ -11,7 +11,7 @@ version_scheme = "no-guess-dev"
 [project]
 # dynamic = ["version"]
 name = "dcm2mids"
-version = "v0.1.25072024"
+version = "v0.2.20240725"
 authors = [
   { name="Jose Manuel Saborit Torres", email="josemanuel.saborit@fisabio.es" },
   { name="Alejandro Mora Rubio", email="alejandro.mora@fisabio.es" },
