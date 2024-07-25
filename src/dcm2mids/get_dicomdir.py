@@ -64,7 +64,7 @@ def get_dicomdir(input_dir: Union[Path, str], exclude_paths: List[Union[Path, st
 
             # Add the private tag with VR (e.g., LO for Long String) and value
             block.add_new(private_tag, 'LO', txt_content)
-            ds.add_new
+            
             if not ds.StudyID:
                 logger.warning(
                     "`StudyID` tag not found for file %s. `AccessionNumber` will be used instead.",
