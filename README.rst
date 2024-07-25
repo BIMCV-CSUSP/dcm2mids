@@ -23,11 +23,14 @@
         :alt: Twitter
         :target: https://twitter.com/dcm2mids
 
+.. image:: https://img.shields.io/pypi/v/dcm2mids.svg
+        :alt: PyPI-Server
+        :target: https://pypi.org/project/dcm2mids/
+
 .. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
 
-|
 
 
 dcm2mids
